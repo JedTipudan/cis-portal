@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+:root {
+  --sage: #7C9A6E;
+  --sage-dark: #5a7a52;
+  --sage-light: #a8c49a;
+  --yellow: #F5C842;
+  --yellow-light: #FDF3C0;
+  --white: #FFFFFF;
+  --gray-50: #F9FAFB;
+  --gray-100: #F3F4F6;
+  --sidebar-bg: #2d4a3e;
+  --sidebar-text: #e8f5e2;
+}
+
+body {
+  background-color: var(--gray-50);
+  font-family: 'Geist', sans-serif;
+}
+
+.sidebar-active {
+  background-color: var(--sage);
+  color: white;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
