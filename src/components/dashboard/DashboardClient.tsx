@@ -272,14 +272,14 @@ export default function DashboardClient({
         {/* Transparency Board */}
         <div className="bg-white rounded-xl p-4 shadow-sm border border-[#7C9A6E]">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Transparency Board (Summary)</p>
-          <div className="grid grid-cols-3 gap-3 text-xs">
+          <div className="space-y-3 text-xs">
             {['MOOE Utilization', 'Programs & Projects', 'Procurement Summary'].map(cat => (
               <div key={cat}>
-                <p className="font-bold text-gray-600 mb-1">{cat.toUpperCase()}</p>
+                <p className="font-bold text-gray-600 mb-1 border-b pb-1">{cat.toUpperCase()}</p>
                 {transparency.filter(t => t.category === cat).map(t => (
-                  <div key={t.id} className="flex justify-between gap-1">
-                    <span className="text-gray-500">{t.label}</span>
-                    <span className={`font-semibold ${t.label === 'Balance' ? 'text-[#7C9A6E]' : ''}`}>{t.value}</span>
+                  <div key={t.id} className="flex justify-between items-center py-0.5">
+                    <span className="text-gray-500 flex-1 pr-2">{t.label}</span>
+                    <span className={`font-semibold text-right whitespace-nowrap ${t.label === 'Balance' ? 'text-[#7C9A6E]' : ''}`}>{t.value}</span>
                   </div>
                 ))}
               </div>
