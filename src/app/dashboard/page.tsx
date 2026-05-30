@@ -9,6 +9,7 @@ export default async function DashboardPage() {
     { data: profile },
     { data: enrollment },
     { data: performance },
+    { data: kpi },
     { data: personnel },
     { data: facilities },
     { data: programs },
@@ -21,6 +22,7 @@ export default async function DashboardPage() {
     supabase.from('school_profile').select('*').single(),
     supabase.from('enrollment').select('*').order('id'),
     supabase.from('performance').select('*').order('mps', { ascending: false }),
+    supabase.from('kpi').select('*').order('indicator'),
     supabase.from('personnel').select('*'),
     supabase.from('facilities').select('*'),
     supabase.from('programs').select('*'),
@@ -36,6 +38,7 @@ export default async function DashboardPage() {
       profile={profile}
       enrollment={enrollment || []}
       performance={performance || []}
+      kpi={kpi || []}
       personnel={personnel || []}
       facilities={facilities || []}
       programs={programs || []}
