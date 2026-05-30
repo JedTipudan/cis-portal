@@ -36,8 +36,17 @@ CREATE TABLE IF NOT EXISTS attendance (
 
 CREATE TABLE IF NOT EXISTS performance (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  grade_level TEXT NOT NULL DEFAULT 'All',
   subject TEXT NOT NULL,
   mps NUMERIC(5,2) DEFAULT 0,
+  school_year TEXT DEFAULT '2024-2025',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS kpi (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  indicator TEXT NOT NULL,
+  value NUMERIC(6,2) DEFAULT 0,
   school_year TEXT DEFAULT '2024-2025',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -114,10 +123,101 @@ INSERT INTO enrollment (grade_level, male, female, school_year) VALUES
 ('Grade 9', 50, 51, '2024-2025'), ('Grade 10', 48, 48, '2024-2025'), ('Grade 11', 37, 38, '2024-2025'),
 ('Grade 12', 32, 33, '2024-2025');
 
-INSERT INTO performance (subject, mps, school_year) VALUES
-('Filipino', 82.4, '2024-2025'), ('English', 85.7, '2024-2025'), ('Mathematics', 78.3, '2024-2025'),
-('Science', 83.1, '2024-2025'), ('Araling Panlipunan', 81.6, '2024-2025'),
-('Edukasyon sa Pagpapakatao', 86.9, '2024-2025'), ('MAPEH', 87.2, '2024-2025'), ('TLE', 84.0, '2024-2025');
+INSERT INTO performance (grade_level, subject, mps, school_year) VALUES
+-- Grade 1
+('Grade 1', 'Language', 82.0, '2024-2025'),
+('Grade 1', 'Reading and Literacy', 80.5, '2024-2025'),
+('Grade 1', 'Mathematics', 78.0, '2024-2025'),
+('Grade 1', 'GMRC', 88.0, '2024-2025'),
+('Grade 1', 'Makabansa', 84.0, '2024-2025'),
+-- Grade 2
+('Grade 2', 'Filipino', 83.0, '2024-2025'),
+('Grade 2', 'English', 81.5, '2024-2025'),
+('Grade 2', 'Mathematics', 79.0, '2024-2025'),
+('Grade 2', 'GMRC', 87.5, '2024-2025'),
+('Grade 2', 'Makabansa', 85.0, '2024-2025'),
+-- Grade 3
+('Grade 3', 'Filipino', 82.5, '2024-2025'),
+('Grade 3', 'English', 80.0, '2024-2025'),
+('Grade 3', 'Mathematics', 77.5, '2024-2025'),
+('Grade 3', 'GMRC', 86.0, '2024-2025'),
+('Grade 3', 'Makabansa', 83.5, '2024-2025'),
+('Grade 3', 'Science', 81.0, '2024-2025'),
+-- Grade 4
+('Grade 4', 'Filipino', 82.0, '2024-2025'),
+('Grade 4', 'English', 80.5, '2024-2025'),
+('Grade 4', 'Mathematics', 76.0, '2024-2025'),
+('Grade 4', 'Science', 79.5, '2024-2025'),
+('Grade 4', 'Araling Panlipunan', 81.0, '2024-2025'),
+('Grade 4', 'Values Education', 86.5, '2024-2025'),
+('Grade 4', 'MAPEH', 87.0, '2024-2025'),
+('Grade 4', 'EPP', 84.0, '2024-2025'),
+-- Grade 5
+('Grade 5', 'Filipino', 83.0, '2024-2025'),
+('Grade 5', 'English', 81.0, '2024-2025'),
+('Grade 5', 'Mathematics', 77.0, '2024-2025'),
+('Grade 5', 'Science', 80.0, '2024-2025'),
+('Grade 5', 'Araling Panlipunan', 82.0, '2024-2025'),
+('Grade 5', 'Values Education', 87.0, '2024-2025'),
+('Grade 5', 'MAPEH', 88.0, '2024-2025'),
+('Grade 5', 'EPP', 84.5, '2024-2025'),
+-- Grade 6
+('Grade 6', 'Filipino', 83.5, '2024-2025'),
+('Grade 6', 'English', 82.0, '2024-2025'),
+('Grade 6', 'Mathematics', 78.0, '2024-2025'),
+('Grade 6', 'Science', 81.0, '2024-2025'),
+('Grade 6', 'Araling Panlipunan', 82.5, '2024-2025'),
+('Grade 6', 'Values Education', 87.5, '2024-2025'),
+('Grade 6', 'MAPEH', 88.5, '2024-2025'),
+('Grade 6', 'EPP', 85.0, '2024-2025'),
+-- Grade 7
+('Grade 7', 'Filipino', 82.0, '2024-2025'),
+('Grade 7', 'English', 80.0, '2024-2025'),
+('Grade 7', 'Mathematics', 75.5, '2024-2025'),
+('Grade 7', 'Science', 79.0, '2024-2025'),
+('Grade 7', 'Araling Panlipunan', 81.0, '2024-2025'),
+('Grade 7', 'Values Education', 86.0, '2024-2025'),
+('Grade 7', 'MAPEH', 87.0, '2024-2025'),
+('Grade 7', 'TLE', 83.5, '2024-2025'),
+-- Grade 8
+('Grade 8', 'Filipino', 82.5, '2024-2025'),
+('Grade 8', 'English', 80.5, '2024-2025'),
+('Grade 8', 'Mathematics', 76.0, '2024-2025'),
+('Grade 8', 'Science', 79.5, '2024-2025'),
+('Grade 8', 'Araling Panlipunan', 81.5, '2024-2025'),
+('Grade 8', 'Values Education', 86.5, '2024-2025'),
+('Grade 8', 'MAPEH', 87.5, '2024-2025'),
+('Grade 8', 'TLE', 84.0, '2024-2025'),
+-- Grade 9
+('Grade 9', 'Filipino', 83.0, '2024-2025'),
+('Grade 9', 'English', 81.0, '2024-2025'),
+('Grade 9', 'Mathematics', 76.5, '2024-2025'),
+('Grade 9', 'Science', 80.0, '2024-2025'),
+('Grade 9', 'Araling Panlipunan', 82.0, '2024-2025'),
+('Grade 9', 'Values Education', 87.0, '2024-2025'),
+('Grade 9', 'MAPEH', 88.0, '2024-2025'),
+('Grade 9', 'TLE', 84.5, '2024-2025'),
+-- Grade 10
+('Grade 10', 'Filipino', 83.5, '2024-2025'),
+('Grade 10', 'English', 81.5, '2024-2025'),
+('Grade 10', 'Mathematics', 77.0, '2024-2025'),
+('Grade 10', 'Science', 80.5, '2024-2025'),
+('Grade 10', 'Araling Panlipunan', 82.5, '2024-2025'),
+('Grade 10', 'Values Education', 87.5, '2024-2025'),
+('Grade 10', 'MAPEH', 88.5, '2024-2025'),
+('Grade 10', 'TLE', 85.0, '2024-2025');
+
+INSERT INTO kpi (indicator, value, school_year) VALUES
+('Enrollment Rate', 95.2, '2024-2025'),
+('Participation Rate', 93.8, '2024-2025'),
+('Cohort Survival Rate', 88.5, '2024-2025'),
+('Completion Rate', 96.8, '2024-2025'),
+('Promotion Rate', 94.3, '2024-2025'),
+('Graduation Rate', 92.1, '2024-2025'),
+('Dropout/School Leaver Rate', 1.2, '2024-2025'),
+('Repetition Rate', 2.5, '2024-2025'),
+('Retention Rate', 97.5, '2024-2025'),
+('Transition Rate', 89.4, '2024-2025');
 
 INSERT INTO personnel (category, count) VALUES
 ('Total Teachers', 58), ('Teacher-Learner Ratio', 21), ('Non-Teaching Staff', 15),
@@ -164,6 +264,7 @@ ALTER TABLE school_profile ENABLE ROW LEVEL SECURITY;
 ALTER TABLE enrollment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE performance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi ENABLE ROW LEVEL SECURITY;
 ALTER TABLE personnel ENABLE ROW LEVEL SECURITY;
 ALTER TABLE facilities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE programs ENABLE ROW LEVEL SECURITY;
@@ -177,6 +278,7 @@ CREATE POLICY "Public read school_profile" ON school_profile FOR SELECT USING (t
 CREATE POLICY "Public read enrollment" ON enrollment FOR SELECT USING (true);
 CREATE POLICY "Public read attendance" ON attendance FOR SELECT USING (true);
 CREATE POLICY "Public read performance" ON performance FOR SELECT USING (true);
+CREATE POLICY "Public read kpi" ON kpi FOR SELECT USING (true);
 CREATE POLICY "Public read personnel" ON personnel FOR SELECT USING (true);
 CREATE POLICY "Public read facilities" ON facilities FOR SELECT USING (true);
 CREATE POLICY "Public read programs" ON programs FOR SELECT USING (true);
@@ -190,6 +292,7 @@ CREATE POLICY "Admin write school_profile" ON school_profile FOR ALL USING (auth
 CREATE POLICY "Admin write enrollment" ON enrollment FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write attendance" ON attendance FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write performance" ON performance FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Admin write kpi" ON kpi FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write personnel" ON personnel FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write facilities" ON facilities FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write programs" ON programs FOR ALL USING (auth.role() = 'authenticated');

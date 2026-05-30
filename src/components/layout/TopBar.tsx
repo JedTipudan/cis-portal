@@ -1,6 +1,7 @@
 'use client'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { LogIn, LogOut, User } from 'lucide-react'
 
 interface Props {
@@ -10,20 +11,26 @@ interface Props {
 export default function TopBar({ user }: Props) {
   const router = useRouter()
   const supabase = createClient()
+  const [dateStr, setDateStr] = useState('')
+
+  useEffect(() => {
+    const now = new Date()
+    setDateStr(
+      now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
+      ' ' +
+      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    )
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
     router.refresh()
   }
 
-  const now = new Date()
-  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-
   return (
     <header className="bg-white border-b px-4 py-2.5 flex items-center justify-between lg:px-6 lg:py-3 mt-12 lg:mt-0">
       <div className="text-xs text-gray-400 hidden sm:block">
-        Updated: {dateStr} {timeStr}
+        {dateStr ? `Updated: ${dateStr}` : ''}
       </div>
       <div className="flex items-center gap-2 ml-auto">
         {user ? (

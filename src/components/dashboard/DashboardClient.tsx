@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -36,6 +37,11 @@ export default function DashboardClient({
   const overallMps = performance.length
     ? (performance.reduce((s, r) => s + Number(r.mps), 0) / performance.length).toFixed(1)
     : '0'
+
+  const [dateLabel, setDateLabel] = useState('')
+  useEffect(() => {
+    setDateLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
+  }, [])
 
   const enrollmentChartData = enrollment.map(r => ({
     name: r.grade_level.replace('Grade ', 'G').replace('Kinder', 'K'),
@@ -218,7 +224,7 @@ export default function DashboardClient({
           <div className="space-y-2 text-xs text-gray-700">
             <p><span className="text-gray-400">Source: </span>LIS, EBEIS, School Forms</p>
             <p><span className="text-gray-400">Prepared By: </span>School Information Unit</p>
-            <p><span className="text-gray-400">Updated: </span>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+            <p><span className="text-gray-400">Updated: </span>{dateLabel}</p>
           </div>
         </div>
       </div>
