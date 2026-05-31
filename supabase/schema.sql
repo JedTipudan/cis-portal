@@ -120,8 +120,7 @@ INSERT INTO enrollment (grade_level, male, female, school_year) VALUES
 ('Kinder', 42, 43, '2024-2025'), ('Grade 1', 46, 46, '2024-2025'), ('Grade 2', 49, 49, '2024-2025'),
 ('Grade 3', 50, 51, '2024-2025'), ('Grade 4', 52, 53, '2024-2025'), ('Grade 5', 55, 55, '2024-2025'),
 ('Grade 6', 54, 54, '2024-2025'), ('Grade 7', 52, 52, '2024-2025'), ('Grade 8', 53, 54, '2024-2025'),
-('Grade 9', 50, 51, '2024-2025'), ('Grade 10', 48, 48, '2024-2025'), ('Grade 11', 37, 38, '2024-2025'),
-('Grade 12', 32, 33, '2024-2025');
+('Grade 9', 50, 51, '2024-2025'), ('Grade 10', 48, 48, '2024-2025');
 
 INSERT INTO performance (grade_level, subject, mps, school_year) VALUES
 -- Grade 1
