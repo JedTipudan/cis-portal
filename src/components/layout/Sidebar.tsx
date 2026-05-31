@@ -54,8 +54,8 @@ export default function Sidebar() {
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3" style={{ backgroundColor: '#2d4a3e' }}>
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-green-900 font-bold text-sm flex-shrink-0">
-            S
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-yellow-400">
+            <img src="/school-logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
           <p className="text-white font-bold text-xs leading-tight">INTEGRATED NHS</p>
         </div>
@@ -76,9 +76,11 @@ export default function Sidebar() {
       <div className={`lg:hidden fixed top-0 left-0 h-full z-50 w-72 flex flex-col transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{ backgroundColor: '#2d4a3e' }}>
         <div className="p-5 border-b border-white/10 flex items-center gap-3 mt-0">
-          <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-green-900 font-bold flex-shrink-0">S</div>
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-yellow-400">
+            <img src="/school-logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+          </div>
           <div>
-            <p className="text-white font-bold text-xs leading-tight">INTEGRATED NATIONAL HIGH SCHOOL</p>
+          <p className="text-white font-bold text-xs leading-tight">CONCEPCION INTEGRATED SCHOOL</p>
             <p className="text-green-300 text-xs mt-0.5">School ID: 108912</p>
           </div>
         </div>
@@ -94,9 +96,11 @@ export default function Sidebar() {
       <aside className="hidden lg:flex w-64 min-h-screen flex-col flex-shrink-0" style={{ backgroundColor: '#2d4a3e' }}>
         <div className="p-5 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-green-900 font-bold text-lg flex-shrink-0">S</div>
+            <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-yellow-400">
+              <img src="/school-logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+            </div>
             <div>
-              <p className="text-white font-bold text-xs leading-tight">INTEGRATED NATIONAL HIGH SCHOOL</p>
+              <p className="text-white font-bold text-xs leading-tight">CONCEPCION INTEGRATED SCHOOL</p>
               <p className="text-green-300 text-xs mt-0.5">School ID: 108912</p>
             </div>
           </div>
