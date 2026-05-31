@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase/server'
 import DashboardClient from '@/components/dashboard/DashboardClient'
+import { sortEnrollment } from '@/lib/sortEnrollment'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -36,7 +37,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       profile={profile}
-      enrollment={enrollment || []}
+      enrollment={sortEnrollment(enrollment || [])}
       performance={performance || []}
       kpi={kpi || []}
       personnel={personnel || []}
