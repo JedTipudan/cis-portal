@@ -29,12 +29,12 @@ const RMA_COLORS: Record<string,string> = {
 }
 
 // Phil-IRI sub-categories
-const PHILIRI_SUBCATS = [
-  { key: 'overall',  label: 'Overall Percentage',       fields: ['three_levels_down','two_levels_down','grade_ready'],                    levels: ['3-Levels Down','2-Levels Down','Grade Ready'],                   colors: {'3-Levels Down':'#EF4444','2-Levels Down':'#F59E0B','Grade Ready':'#7C9A6E'} },
-  { key: 'tld_fil',  label: '3-Levels Down in Filipino', fields: ['tld_fil_frustration','tld_fil_instructional','tld_fil_independent'],    levels: ['Frustration','Instructional','Independent'],                     colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} },
-  { key: 'tld_eng',  label: '3-Levels Down in English',  fields: ['tld_eng_frustration','tld_eng_instructional','tld_eng_independent'],    levels: ['Frustration','Instructional','Independent'],                     colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} },
-  { key: 'twd_fil',  label: '2-Levels Down in Filipino', fields: ['twd_fil_frustration','twd_fil_instructional','twd_fil_independent'],    levels: ['Frustration','Instructional','Independent'],                     colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} },
-  { key: 'twd_eng',  label: '2-Levels Down in English',  fields: ['twd_eng_frustration','twd_eng_instructional','twd_eng_independent'],    levels: ['Frustration','Instructional','Independent'],                     colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} },
+const PHILIRI_SUBCATS: {key:string;label:string;fields:string[];levels:string[];colors:Record<string,string>}[] = [
+  { key: 'overall',  label: 'Overall Percentage',       fields: ['three_levels_down','two_levels_down','grade_ready'],                 levels: ['3-Levels Down','2-Levels Down','Grade Ready'],  colors: {'3-Levels Down':'#EF4444','2-Levels Down':'#F59E0B','Grade Ready':'#7C9A6E'} as Record<string,string> },
+  { key: 'tld_fil',  label: '3-Levels Down in Filipino', fields: ['tld_fil_frustration','tld_fil_instructional','tld_fil_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
+  { key: 'tld_eng',  label: '3-Levels Down in English',  fields: ['tld_eng_frustration','tld_eng_instructional','tld_eng_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
+  { key: 'twd_fil',  label: '2-Levels Down in Filipino', fields: ['twd_fil_frustration','twd_fil_instructional','twd_fil_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
+  { key: 'twd_eng',  label: '2-Levels Down in English',  fields: ['twd_eng_frustration','twd_eng_instructional','twd_eng_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
 ]
 
 const NEGATIVE_KPIS = new Set(['Dropout/School Leaver Rate','Repetition Rate'])
