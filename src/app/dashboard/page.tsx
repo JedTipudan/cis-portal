@@ -18,11 +18,12 @@ export default async function DashboardPage() {
     { data: achievements },
     { data: needs },
     { data: attendance },
+    { data: learnerProfile },
     { data: { user } },
   ] = await Promise.all([
     supabase.from('school_profile').select('*').single(),
     supabase.from('enrollment').select('*').order('id'),
-    supabase.from('performance').select('*').order('mps', { ascending: false }),
+    supabase.from('performance').select('*').order('grade_level').order('subject'),
     supabase.from('kpi').select('*').order('indicator'),
     supabase.from('personnel').select('*'),
     supabase.from('facilities').select('*'),
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
     supabase.from('achievements').select('*'),
     supabase.from('priority_needs').select('*').order('priority'),
     supabase.from('attendance').select('*').order('id'),
+    supabase.from('learner_profile').select('*').order('id'),
     supabase.auth.getUser(),
   ])
 
@@ -41,12 +43,13 @@ export default async function DashboardPage() {
       performance={performance || []}
       kpi={kpi || []}
       personnel={personnel || []}
-      facilities={facilities || []}
+      facilities={facilities || []  }
       programs={programs || []}
       transparency={transparency || []}
       achievements={achievements || []}
       needs={needs || []}
       attendance={attendance || []}
+      learnerProfile={learnerProfile || []}
       isAdmin={!!user}
     />
   )

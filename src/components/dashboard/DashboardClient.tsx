@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar,
+  PieChart, Pie, Cell, Legend,
 } from 'recharts'
 
 interface Props {
@@ -18,35 +18,40 @@ interface Props {
   achievements: any[]
   needs: any[]
   attendance: any[]
+  learnerProfile: any[]
   isAdmin: boolean
 }
 
-const COLORS = ['#7C9A6E', '#3B82F6', '#EF4444']
 const NEGATIVE_KPIS = new Set(['Dropout/School Leaver Rate', 'Repetition Rate'])
 
-const ASSESSMENTS = [
-  { key: 'ks1', label: 'KS1 (Grades 1–3)', color: '#3B82F6', items: [{ name: 'CRLA', sub: 'Reading Level', value: 78 }, { name: 'RMA', sub: 'Numeracy Level', value: 72 }] },
-  { key: 'ks2', label: 'KS2 (Grades 4–6)', color: '#7C9A6E', items: [{ name: 'Phil-IRI', sub: 'Reading Level', value: 76 }, { name: 'RMA', sub: 'Numeracy Level', value: 68 }] },
-  { key: 'ks3', label: 'KS3 (Grades 7–10)', color: '#8B5CF6', items: [{ name: 'Phil-IRI', sub: 'Reading Level', value: 74 }, { name: 'RMA', sub: 'Numeracy Level', value: 66 }] },
-]
+const GRADE_ORDER = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
 
-function GaugeChart({ value, color }: { value: number; color: string }) {
-  const data = [{ value, fill: color }, { value: 100 - value, fill: '#F3F4F6' }]
-  return (
-    <ResponsiveContainer width={80} height={80}>
-      <PieChart>
-        <Pie data={data} cx="50%" cy="50%" startAngle={180} endAngle={0}
-          innerRadius={28} outerRadius={38} dataKey="value" stroke="none">
-          {data.map((d, i) => <Cell key={i} fill={d.fill} />)}
-        </Pie>
-      </PieChart>
-    </ResponsiveContainer>
-  )
+const PROFILE_COLORS: Record<string, string> = {
+  'Male': '#3B82F6',
+  'Female': '#EC4899',
+  'SPED': '#8B5CF6',
+  'IP': '#F59E0B',
+  'Others': '#6B7280',
+}
+
+// Compute average MPS per grade from all subjects
+function getMpsByGrade(performance: any[]) {
+  const map: Record<string, number[]> = {}
+  performance.forEach(p => {
+    if (!map[p.grade_level]) map[p.grade_level] = []
+    map[p.grade_level].push(Number(p.mps))
+  })
+  return GRADE_ORDER.map(g => ({
+    grade: g.replace('Grade ', 'G'),
+    mps: map[g] ? Number((map[g].reduce((s, v) => s + v, 0) / map[g].length).toFixed(1)) : 0,
+    subjects: map[g] ? [...new Set(performance.filter(p => p.grade_level === g).map(p => p.subject))] : [],
+    avgMps: map[g] ? Number((map[g].reduce((s, v) => s + v, 0) / map[g].length).toFixed(1)) : 0,
+  })).filter(g => g.mps > 0)
 }
 
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
-  programs, transparency, achievements, needs, attendance, isAdmin
+  programs, transparency, achievements, needs, attendance, learnerProfile, isAdmin
 }: Props) {
   const totalEnrollment = enrollment.reduce((s, r) => s + r.male + r.female, 0)
   const totalMale = enrollment.reduce((s, r) => s + r.male, 0)
@@ -55,12 +60,6 @@ export default function DashboardClient({
   const lastAttendance = attendance[attendance.length - 1] || { present: 0, absent: 0 }
   const totalStudents = lastAttendance.present + lastAttendance.absent
   const adaRate = totalStudents > 0 ? ((lastAttendance.present / totalStudents) * 100).toFixed(1) : '0'
-
-  // Only use unique subjects for MPS display (avoid duplicates from grade-level rows)
-  const uniqueSubjects = Array.from(new Map(performance.map(p => [p.subject, p])).values()).slice(0, 8)
-  const overallMps = uniqueSubjects.length
-    ? (uniqueSubjects.reduce((s, r) => s + Number(r.mps), 0) / uniqueSubjects.length).toFixed(1)
-    : '0'
 
   const [dateLabel, setDateLabel] = useState('')
   useEffect(() => {
@@ -72,6 +71,24 @@ export default function DashboardClient({
     total: r.male + r.female,
   }))
 
+  // MPS per grade (averaged across all subjects)
+  const mpsByGrade = getMpsByGrade(performance)
+  const overallMps = mpsByGrade.length
+    ? (mpsByGrade.reduce((s, g) => s + g.mps, 0) / mpsByGrade.length).toFixed(1)
+    : '0'
+
+  // Learner profile pie data
+  const profilePieData = learnerProfile.length > 0
+    ? learnerProfile.map(p => ({
+        name: p.category,
+        value: p.count,
+        color: PROFILE_COLORS[p.category] || '#6B7280',
+      }))
+    : [
+        { name: `Male`, value: totalMale, color: '#3B82F6' },
+        { name: `Female`, value: totalFemale, color: '#EC4899' },
+      ]
+
   const masteredCount = Math.round(totalEnrollment * 0.35)
   const nearingCount = Math.round(totalEnrollment * 0.45)
   const lowCount = totalEnrollment - masteredCount - nearingCount
@@ -80,6 +97,7 @@ export default function DashboardClient({
     { name: 'Nearing 45%', value: nearingCount },
     { name: 'Low 20%', value: lowCount },
   ]
+  const masteryColors = ['#7C9A6E', '#3B82F6', '#EF4444']
 
   return (
     <div className="space-y-4">
@@ -104,7 +122,7 @@ export default function DashboardClient({
       </div>
 
       {/* Top Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard title="Total Enrollment" value={totalEnrollment.toLocaleString()}
           sub={`M: ${totalMale} / F: ${totalFemale}`} href="/dashboard/enrollment" color="#3B82F6" />
         <StatCard title="Avg Daily Attendance" value={`${adaRate}%`}
@@ -115,39 +133,10 @@ export default function DashboardClient({
           sub="Completers" href="/dashboard/performance?tab=kpi" color="#F5C842" />
       </div>
 
-      {/* Learning Assessment Summary */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border">
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Assessment Summary</p>
-        <p className="text-xs text-gray-400 mb-4">Results are based on the latest available assessment</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {ASSESSMENTS.map(a => (
-            <div key={a.key} className="border rounded-lg p-3">
-              <p className="text-xs font-bold text-center mb-3 px-2 py-1 rounded text-white" style={{ backgroundColor: a.color }}>{a.label}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {a.items.map(item => (
-                  <div key={item.name} className="flex flex-col items-center">
-                    <p className="text-xs font-bold text-gray-700">{item.name}</p>
-                    <p className="text-[10px] text-gray-400 mb-1">{item.sub}</p>
-                    <div className="relative">
-                      <GaugeChart value={item.value} color={a.color} />
-                      <div className="absolute inset-0 flex items-end justify-center pb-1">
-                        <span className="text-sm font-bold" style={{ color: a.color }}>{item.value}%</span>
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-gray-400 text-center leading-tight">At or Above<br />Benchmark</p>
-                  </div>
-                ))}
-              </div>
-              <Link href="/dashboard/performance?tab=reading" className="text-xs text-[#7C9A6E] hover:underline mt-2 block text-center">View details →</Link>
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Enrollment Chart + Learner Profile + Key Indicators */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Enrollment Chart */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border lg:col-span-1">
+        <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Enrollment by Grade Level</p>
           <p className="text-xs text-gray-400 mb-2">Total: {totalEnrollment.toLocaleString()} Learners</p>
           <ResponsiveContainer width="100%" height={180}>
@@ -158,28 +147,35 @@ export default function DashboardClient({
               <Bar dataKey="total" fill="#3B82F6" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+          <Link href="/dashboard/enrollment" className="text-xs text-[#7C9A6E] hover:underline mt-2 block">View details →</Link>
         </div>
 
-        {/* Learner Profile Pie */}
+        {/* Learner Profile Pie — Male, Female, SPED, IP, Others */}
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learner Profile</p>
-          <ResponsiveContainer width="100%" height={180}>
+          <p className="text-xs text-gray-400 mb-1">Breakdown by category</p>
+          <ResponsiveContainer width="100%" height={170}>
             <PieChart>
-              <Pie data={[
-                { name: `Male ${((totalMale / totalEnrollment) * 100).toFixed(2)}%`, value: totalMale },
-                { name: `Female ${((totalFemale / totalEnrollment) * 100).toFixed(2)}%`, value: totalFemale },
-              ]} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value">
-                <Cell fill="#3B82F6" />
-                <Cell fill="#EF4444" />
+              <Pie data={profilePieData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value">
+                {profilePieData.map((p, i) => <Cell key={i} fill={p.color} />)}
               </Pie>
               <Legend iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
-              <Tooltip />
+              <Tooltip formatter={(v: any, name: any) => [`${v} learners`, name]} />
             </PieChart>
           </ResponsiveContainer>
-          <p className="text-center text-xs font-bold text-gray-700 -mt-2">{totalEnrollment.toLocaleString()} Total Learners</p>
+          {/* Summary counts */}
+          <div className="grid grid-cols-3 gap-1 mt-1">
+            {profilePieData.map(p => (
+              <div key={p.name} className="text-center">
+                <p className="text-xs font-bold" style={{ color: p.color }}>{p.value}</p>
+                <p className="text-[10px] text-gray-400">{p.name}</p>
+              </div>
+            ))}
+          </div>
+          <Link href="/dashboard/enrollment" className="text-xs text-[#7C9A6E] hover:underline mt-2 block">View details →</Link>
         </div>
 
-        {/* KEY INDICATORS — all 10 KPIs */}
+        {/* Key Indicators */}
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Key Indicators</p>
           <div className="space-y-2">
@@ -201,43 +197,53 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* MPS + Mastery */}
+      {/* MPS per Grade + Mastery */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* MPS per Grade Level */}
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Performance (MPS)</p>
-          <p className="text-xs text-gray-400 mb-3">Mean Percentage Score</p>
+          <p className="text-xs text-gray-400 mb-3">Average MPS per Grade Level</p>
           <div className="space-y-2">
-            {uniqueSubjects.map(p => (
-              <div key={p.id} className="flex items-center gap-2">
-                <span className="text-xs text-gray-700 w-28 truncate">{p.subject}</span>
-                <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                  <div className="h-1.5 rounded-full bg-blue-500" style={{ width: `${p.mps}%` }} />
+            {mpsByGrade.map(g => (
+              <div key={g.grade} className="flex items-center gap-2">
+                <span className="text-xs text-gray-700 w-8 flex-shrink-0">{g.grade}</span>
+                <div className="flex-1 bg-gray-100 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full transition-all"
+                    style={{
+                      width: `${g.mps}%`,
+                      backgroundColor: g.mps >= 85 ? '#7C9A6E' : g.mps >= 75 ? '#3B82F6' : '#EF4444'
+                    }}
+                  />
                 </div>
-                <span className="text-xs font-semibold text-gray-700 w-7 text-right">{p.mps}</span>
+                <span className="text-xs font-semibold text-gray-700 w-8 text-right">{g.mps}</span>
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1 border-t">
-              <span className="text-xs font-bold text-gray-700 w-28">OVERALL MPS</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                <div className="h-1.5 rounded-full bg-[#7C9A6E]" style={{ width: `${overallMps}%` }} />
+              <span className="text-xs font-bold text-gray-700 w-8">AVG</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-2">
+                <div className="h-2 rounded-full bg-[#7C9A6E]" style={{ width: `${overallMps}%` }} />
               </div>
-              <span className="text-xs font-bold text-gray-700 w-7 text-right">{overallMps}</span>
+              <span className="text-xs font-bold text-gray-700 w-8 text-right">{overallMps}</span>
             </div>
           </div>
+          <Link href="/dashboard/performance?tab=academic" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">View by subject →</Link>
         </div>
 
+        {/* Learner Mastery */}
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learner Mastery Level</p>
           <p className="text-xs text-gray-400 mb-2">All Learning Areas</p>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie data={masteryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value">
-                {masteryData.map((_, i) => <Cell key={i} fill={COLORS[i]} />)}
+                {masteryData.map((_, i) => <Cell key={i} fill={masteryColors[i]} />)}
               </Pie>
               <Legend iconSize={8} wrapperStyle={{ fontSize: '10px' }} />
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
+          <Link href="/dashboard/performance?tab=academic" className="text-xs text-[#7C9A6E] hover:underline mt-2 block">View details →</Link>
         </div>
       </div>
 
@@ -247,7 +253,7 @@ export default function DashboardClient({
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Teaching & Non-Teaching Personnel</p>
           <div className="space-y-1.5">
             {personnel.map(p => (
-              <div key={p.id} className="flex justify-between text-sm">
+              <div key={p.id} className="flex justify-between">
                 <span className="text-gray-600 text-xs">{p.category}</span>
                 <span className="font-semibold text-xs">{p.count}</span>
               </div>
@@ -260,7 +266,7 @@ export default function DashboardClient({
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Facilities & Resources</p>
           <div className="space-y-1.5">
             {facilities.map(f => (
-              <div key={f.id} className="flex justify-between text-sm">
+              <div key={f.id} className="flex justify-between">
                 <span className="text-gray-600 text-xs">{f.name}</span>
                 <span className="font-semibold text-xs">{f.value}</span>
               </div>
