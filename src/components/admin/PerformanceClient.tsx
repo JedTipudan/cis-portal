@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
 import {
@@ -147,10 +148,18 @@ export default function PerformanceClient({
 }: {
   performance: any[]; kpi: any[]; reading: any[]; philiri: any[]; isAdmin: boolean
 }) {
+  const searchParams = useSearchParams()
   const [tab, setTab] = useState<'kpi'|'academic'|'reading'>('kpi')
   const [selectedGrade, setSelectedGrade] = useState('Grade 1')
   const [selectedAssessment, setSelectedAssessment] = useState<'CRLA'|'Phil-IRI'|'RMA'>('CRLA')
   const [philiriSubcat, setPhiliriSubcat] = useState('overall')
+
+  useEffect(() => {
+    const t = searchParams.get('tab')
+    const a = searchParams.get('assessment')
+    if (t === 'kpi' || t === 'academic' || t === 'reading') setTab(t)
+    if (a === 'CRLA' || a === 'Phil-IRI' || a === 'RMA') setSelectedAssessment(a)
+  }, [searchParams])
   const [kpiRows, setKpiRows] = useState(kpi)
   const [perfRows, setPerfRows] = useState(performance)
   const [readingRows, setReadingRows] = useState(reading)

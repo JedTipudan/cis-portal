@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic'
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import PerformanceClient from '@/components/admin/PerformanceClient'
 
@@ -18,12 +19,14 @@ export default async function PerformancePage() {
     supabase.auth.getUser(),
   ])
   return (
-    <PerformanceClient
-      performance={performance || []}
-      kpi={kpi || []}
-      reading={reading || []}
-      philiri={philiri || []}
-      isAdmin={!!user}
-    />
+    <Suspense fallback={<div className="p-8 text-center text-gray-400">Loading...</div>}>
+      <PerformanceClient
+        performance={performance || []}
+        kpi={kpi || []}
+        reading={reading || []}
+        philiri={philiri || []}
+        isAdmin={!!user}
+      />
+    </Suspense>
   )
 }

@@ -110,9 +110,9 @@ export default function DashboardClient({
         <StatCard title="Avg Daily Attendance" value={`${adaRate}%`}
           sub={`Present: ${lastAttendance.present}`} href="/dashboard/attendance" color="#7C9A6E" />
         <StatCard title="Promotion Rate" value={`${kpi.find(k => k.indicator === 'Promotion Rate')?.value ?? 94.3}%`}
-          sub="Promoted learners" href="/dashboard/performance" color="#8B5CF6" />
+          sub="Promoted learners" href="/dashboard/performance?tab=kpi" color="#8B5CF6" />
         <StatCard title="Completion Rate" value={`${kpi.find(k => k.indicator === 'Completion Rate')?.value ?? 96.8}%`}
-          sub="Completers" href="/dashboard/performance" color="#F5C842" />
+          sub="Completers" href="/dashboard/performance?tab=kpi" color="#F5C842" />
       </div>
 
       {/* Learning Assessment Summary */}
@@ -138,7 +138,7 @@ export default function DashboardClient({
                   </div>
                 ))}
               </div>
-              <Link href="/dashboard/performance" className="text-xs text-[#7C9A6E] hover:underline mt-2 block text-center">View details →</Link>
+              <Link href="/dashboard/performance?tab=reading" className="text-xs text-[#7C9A6E] hover:underline mt-2 block text-center">View details →</Link>
             </div>
           ))}
         </div>
@@ -197,7 +197,7 @@ export default function DashboardClient({
               )
             })}
           </div>
-          <Link href="/dashboard/performance" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">View details →</Link>
+          <Link href="/dashboard/performance?tab=kpi" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">View details →</Link>
         </div>
       </div>
 
