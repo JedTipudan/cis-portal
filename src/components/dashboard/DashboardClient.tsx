@@ -20,6 +20,8 @@ interface Props {
   attendance: any[]
   learnerProfile: any[]
   otherFunds: any[]
+  mooeMonthly: any[]
+  programsMonthly: any[]
   isAdmin: boolean
 }
 
@@ -52,7 +54,7 @@ function getMpsByGrade(performance: any[]) {
 
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
-  programs, transparency, achievements, needs, attendance, learnerProfile, otherFunds, isAdmin
+  programs, transparency, achievements, needs, attendance, learnerProfile, otherFunds, mooeMonthly, programsMonthly, isAdmin
 }: Props) {
   const totalEnrollment = enrollment.reduce((s, r) => s + r.male + r.female, 0)
   const totalMale = enrollment.reduce((s, r) => s + r.male, 0)
@@ -64,6 +66,10 @@ export default function DashboardClient({
 
   const totalIgp = otherFunds.reduce((s: number, r: any) => s + Number(r.igp), 0)
   const totalCanteen = otherFunds.reduce((s: number, r: any) => s + Number(r.canteen), 0)
+  const totalAllocated = mooeMonthly.reduce((s: number, r: any) => s + Number(r.allocated), 0)
+  const totalUtilized = mooeMonthly.reduce((s: number, r: any) => s + Number(r.utilized), 0)
+  const totalBalance = totalAllocated - totalUtilized
+  const lastProg = programsMonthly[programsMonthly.length - 1] || { implemented: 0, ongoing: 0, completed: 0 }
   const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 
   const [dateLabel, setDateLabel] = useState('')
@@ -355,6 +361,18 @@ export default function DashboardClient({
                     <span className="font-semibold whitespace-nowrap text-[#3B82F6]">{fmt(totalCanteen)}</span>
                   </div>
                 </>
+              ) : cat === 'MOOE Utilization' ? (
+                <>
+                  <div className="flex justify-between items-center py-0.5"><span className="text-gray-500 flex-1 pr-2">Allocated</span><span className="font-semibold whitespace-nowrap">{fmt(totalAllocated)}</span></div>
+                  <div className="flex justify-between items-center py-0.5"><span className="text-gray-500 flex-1 pr-2">Utilized</span><span className="font-semibold whitespace-nowrap">{fmt(totalUtilized)}</span></div>
+                  <div className="flex justify-between items-center py-0.5"><span className="text-gray-500 flex-1 pr-2">Balance</span><span className="font-semibold whitespace-nowrap text-[#7C9A6E]">{fmt(totalBalance)}</span></div>
+                </>
+              ) : cat === 'Programs & Projects' ? (
+                <>
+                  <div className="flex justify-between items-center py-0.5"><span className="text-gray-500 flex-1 pr-2">Implemented</span><span className="font-semibold">{lastProg.implemented}</span></div>
+                  <div className="flex justify-between items-center py-0.5"><span className="text-gray-500 flex-1 pr-2">Ongoing</span><span className="font-semibold">{lastProg.ongoing}</span></div>
+                  <div className="flex justify-between items-center py-0.5"><span className="text-gray-500 flex-1 pr-2">Completed</span><span className="font-semibold">{lastProg.completed}</span></div>
+                </>
               ) : (
                 transparency.filter(t => t.category === cat).map(t => (
                   <div key={t.id} className="flex justify-between items-center py-0.5">
@@ -366,7 +384,7 @@ export default function DashboardClient({
             </div>
           ))}
         </div>
-        <Link href="/dashboard/transparency?tab=other-funds" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">
+        <Link href="/dashboard/transparency?tab=mooe" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">
           View Full Transparency Board →
         </Link>
       </div>
