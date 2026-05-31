@@ -19,6 +19,7 @@ export default async function DashboardPage() {
     { data: needs },
     { data: attendance },
     { data: learnerProfile },
+    { data: otherFunds },
     { data: { user } },
   ] = await Promise.all([
     supabase.from('school_profile').select('*').single(),
@@ -33,6 +34,7 @@ export default async function DashboardPage() {
     supabase.from('priority_needs').select('*').order('priority'),
     supabase.from('attendance').select('*').order('id'),
     supabase.from('learner_profile').select('*').order('id'),
+    supabase.from('other_funds').select('*').order('id'),
     supabase.auth.getUser(),
   ])
 
@@ -50,6 +52,7 @@ export default async function DashboardPage() {
       needs={needs || []}
       attendance={attendance || []}
       learnerProfile={learnerProfile || []}
+      otherFunds={otherFunds || []}
       isAdmin={!!user}
     />
   )

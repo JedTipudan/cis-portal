@@ -19,6 +19,7 @@ interface Props {
   needs: any[]
   attendance: any[]
   learnerProfile: any[]
+  otherFunds: any[]
   isAdmin: boolean
 }
 
@@ -51,7 +52,7 @@ function getMpsByGrade(performance: any[]) {
 
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
-  programs, transparency, achievements, needs, attendance, learnerProfile, isAdmin
+  programs, transparency, achievements, needs, attendance, learnerProfile, otherFunds, isAdmin
 }: Props) {
   const totalEnrollment = enrollment.reduce((s, r) => s + r.male + r.female, 0)
   const totalMale = enrollment.reduce((s, r) => s + r.male, 0)
@@ -60,6 +61,10 @@ export default function DashboardClient({
   const lastAttendance = attendance[attendance.length - 1] || { present: 0, absent: 0 }
   const totalStudents = lastAttendance.present + lastAttendance.absent
   const adaRate = totalStudents > 0 ? ((lastAttendance.present / totalStudents) * 100).toFixed(1) : '0'
+
+  const totalIgp = otherFunds.reduce((s: number, r: any) => s + Number(r.igp), 0)
+  const totalCanteen = otherFunds.reduce((s: number, r: any) => s + Number(r.canteen), 0)
+  const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 
   const [dateLabel, setDateLabel] = useState('')
   useEffect(() => {
@@ -336,19 +341,32 @@ export default function DashboardClient({
       <div className="bg-white rounded-xl p-4 shadow-sm border border-[#7C9A6E]">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Transparency Board (Summary)</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-          {['MOOE Utilization', 'Programs & Projects', 'Procurement Summary'].map(cat => (
+          {['MOOE Utilization', 'Programs & Projects', 'Other Funds'].map(cat => (
             <div key={cat}>
               <p className="font-bold text-gray-600 mb-1 border-b pb-1">{cat.toUpperCase()}</p>
-              {transparency.filter(t => t.category === cat).map(t => (
-                <div key={t.id} className="flex justify-between items-center py-0.5">
-                  <span className="text-gray-500 flex-1 pr-2">{t.label}</span>
-                  <span className={`font-semibold whitespace-nowrap ${t.label === 'Balance' ? 'text-[#7C9A6E]' : ''}`}>{t.value}</span>
-                </div>
-              ))}
+              {cat === 'Other Funds' ? (
+                <>
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-gray-500 flex-1 pr-2">IGP Total</span>
+                    <span className="font-semibold whitespace-nowrap text-[#7C9A6E]">{fmt(totalIgp)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-0.5">
+                    <span className="text-gray-500 flex-1 pr-2">Canteen Total</span>
+                    <span className="font-semibold whitespace-nowrap text-[#3B82F6]">{fmt(totalCanteen)}</span>
+                  </div>
+                </>
+              ) : (
+                transparency.filter(t => t.category === cat).map(t => (
+                  <div key={t.id} className="flex justify-between items-center py-0.5">
+                    <span className="text-gray-500 flex-1 pr-2">{t.label}</span>
+                    <span className={`font-semibold whitespace-nowrap ${t.label === 'Balance' ? 'text-[#7C9A6E]' : ''}`}>{t.value}</span>
+                  </div>
+                ))
+              )}
             </div>
           ))}
         </div>
-        <Link href="/dashboard/transparency" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">
+        <Link href="/dashboard/transparency?tab=other-funds" className="text-xs text-[#7C9A6E] hover:underline mt-3 block">
           View Full Transparency Board →
         </Link>
       </div>
