@@ -22,6 +22,8 @@ interface Props {
   otherFunds: any[]
   mooeMonthly: any[]
   programsMonthly: any[]
+  reading: any[]
+  philiri: any[]
   isAdmin: boolean
 }
 
@@ -54,7 +56,8 @@ function getMpsByGrade(performance: any[]) {
 
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
-  programs, transparency, achievements, needs, attendance, learnerProfile, otherFunds, mooeMonthly, programsMonthly, isAdmin
+  programs, transparency, achievements, needs, attendance, learnerProfile,
+  otherFunds, mooeMonthly, programsMonthly, reading, philiri, isAdmin
 }: Props) {
   const totalEnrollment = enrollment.reduce((s, r) => s + r.male + r.female, 0)
   const totalMale = enrollment.reduce((s, r) => s + r.male, 0)
@@ -71,6 +74,23 @@ export default function DashboardClient({
   const totalBalance = totalAllocated - totalUtilized
   const lastProg = programsMonthly[programsMonthly.length - 1] || { implemented: 0, ongoing: 0, completed: 0 }
   const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
+
+  // Reading assessment summary for dashboard
+  const crlaTotal = reading.filter(r => r.assessment_type === 'CRLA')
+    .reduce((s, r) => s + Number(r.low_emerging||0) + Number(r.high_emerging||0) + Number(r.developing||0) + Number(r.transition||0) + Number(r.grade_level_reader||0), 0)
+  const crlaGradeLevel = reading.filter(r => r.assessment_type === 'CRLA')
+    .reduce((s, r) => s + Number(r.grade_level_reader||0), 0)
+  const crlaRate = crlaTotal > 0 ? Math.round((crlaGradeLevel / crlaTotal) * 100) : 0
+
+  const philiriTotal = philiri.reduce((s, r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
+  const philiriReady = philiri.reduce((s, r) => s + Number(r.grade_ready||0), 0)
+  const philiriRate = philiriTotal > 0 ? Math.round((philiriReady / philiriTotal) * 100) : 0
+
+  const rmaTotal = reading.filter(r => r.assessment_type === 'RMA')
+    .reduce((s, r) => s + Number(r.not_proficient||0) + Number(r.low_proficient||0) + Number(r.nearly_proficient||0) + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
+  const rmaProficient = reading.filter(r => r.assessment_type === 'RMA')
+    .reduce((s, r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
+  const rmaRate = rmaTotal > 0 ? Math.round((rmaProficient / rmaTotal) * 100) : 0
 
   const [dateLabel, setDateLabel] = useState('')
   useEffect(() => {
@@ -142,6 +162,32 @@ export default function DashboardClient({
           sub="Promoted learners" href="/dashboard/performance?tab=kpi" color="#8B5CF6" />
         <StatCard title="Completion Rate" value={`${kpi.find(k => k.indicator === 'Completion Rate')?.value ?? 96.8}%`}
           sub="Completers" href="/dashboard/performance?tab=kpi" color="#F5C842" />
+      </div>
+
+      {/* Learning Assessment Summary — CRLA, Phil-IRI, RMA */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Assessment Summary</p>
+        <p className="text-xs text-gray-400 mb-4">Learners at or above benchmark</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            { label: 'CRLA', sub: 'Grades 1–3 · Reading at Grade Level', rate: crlaRate, color: '#3B82F6', href: '/dashboard/performance?tab=reading&assessment=CRLA' },
+            { label: 'Phil-IRI', sub: 'Grades 4–10 · Grade Ready', rate: philiriRate, color: '#7C9A6E', href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+            { label: 'RMA', sub: 'Grades 1–10 · Proficient & Above', rate: rmaRate, color: '#8B5CF6', href: '/dashboard/performance?tab=reading&assessment=RMA' },
+          ].map(a => (
+            <div key={a.label} className="border rounded-xl p-4 flex flex-col items-center gap-2">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: a.color }}>
+                {a.label.charAt(0)}
+              </div>
+              <p className="text-sm font-bold text-gray-800">{a.label}</p>
+              <p className="text-[10px] text-gray-400 text-center leading-tight">{a.sub}</p>
+              <p className="text-3xl font-bold" style={{ color: a.color }}>{a.rate}%</p>
+              <div className="w-full bg-gray-100 rounded-full h-2">
+                <div className="h-2 rounded-full" style={{ width: `${a.rate}%`, backgroundColor: a.color }} />
+              </div>
+              <Link href={a.href} className="text-xs text-[#7C9A6E] hover:underline">View details →</Link>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Enrollment Chart + Learner Profile + Key Indicators */}

@@ -22,6 +22,8 @@ export default async function DashboardPage() {
     { data: otherFunds },
     { data: mooeMonthly },
     { data: programsMonthly },
+    { data: reading },
+    { data: philiri },
     { data: { user } },
   ] = await Promise.all([
     supabase.from('school_profile').select('*').single(),
@@ -39,6 +41,8 @@ export default async function DashboardPage() {
     supabase.from('other_funds').select('*').order('id'),
     supabase.from('mooe_monthly').select('*').order('id'),
     supabase.from('programs_monthly').select('*').order('id'),
+    supabase.from('reading_assessment').select('*').order('grade_level'),
+    supabase.from('philiri_assessment').select('*').order('grade_level'),
     supabase.auth.getUser(),
   ])
 
@@ -59,6 +63,8 @@ export default async function DashboardPage() {
       otherFunds={otherFunds || []}
       mooeMonthly={mooeMonthly || []}
       programsMonthly={programsMonthly || []}
+      reading={reading || []}
+      philiri={philiri || []}
       isAdmin={!!user}
     />
   )
