@@ -6,6 +6,26 @@ import {
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
 
+function GaugeChart({ value, color }: { value: number; color: string }) {
+  const data = [{ value }, { value: 100 - value }]
+  return (
+    <ResponsiveContainer width={90} height={55}>
+      <PieChart>
+        <Pie
+          data={data}
+          cx="50%" cy="100%"
+          startAngle={180} endAngle={0}
+          innerRadius={28} outerRadius={42}
+          dataKey="value" stroke="none"
+        >
+          <Cell fill={color} />
+          <Cell fill="#E5E7EB" />
+        </Pie>
+      </PieChart>
+    </ResponsiveContainer>
+  )
+}
+
 interface Props {
   profile: any
   enrollment: any[]
@@ -167,24 +187,38 @@ export default function DashboardClient({
       {/* Learning Assessment Summary — CRLA, Phil-IRI, RMA */}
       <div className="bg-white rounded-xl p-4 shadow-sm border">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Assessment Summary</p>
-        <p className="text-xs text-gray-400 mb-4">Learners at or above benchmark</p>
+        <p className="text-xs text-gray-400 mb-4">Results are based on the latest available assessment</p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
-            { label: 'CRLA', sub: 'Grades 1–3 · Reading at Grade Level', rate: crlaRate, color: '#3B82F6', href: '/dashboard/performance?tab=reading&assessment=CRLA' },
-            { label: 'Phil-IRI', sub: 'Grades 4–10 · Grade Ready', rate: philiriRate, color: '#7C9A6E', href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
-            { label: 'RMA', sub: 'Grades 1–10 · Proficient & Above', rate: rmaRate, color: '#8B5CF6', href: '/dashboard/performance?tab=reading&assessment=RMA' },
-          ].map(a => (
-            <div key={a.label} className="border rounded-xl p-4 flex flex-col items-center gap-2">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: a.color }}>
-                {a.label.charAt(0)}
+            { label: 'KS1 (Grades 1–3)', color: '#3B82F6', items: [
+              { name: 'CRLA', sub: 'Reading Level', rate: crlaRate, href: '/dashboard/performance?tab=reading&assessment=CRLA' },
+              { name: 'RMA', sub: 'Numeracy Level', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+            ]},
+            { label: 'KS2 (Grades 4–6)', color: '#7C9A6E', items: [
+              { name: 'Phil-IRI', sub: 'Reading Level', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+              { name: 'RMA', sub: 'Numeracy Level', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+            ]},
+            { label: 'KS3 (Grades 7–10)', color: '#8B5CF6', items: [
+              { name: 'Phil-IRI', sub: 'Reading Level', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+              { name: 'RMA', sub: 'Numeracy Level', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+            ]},
+          ].map(group => (
+            <div key={group.label} className="border rounded-xl p-4">
+              <p className="text-xs font-bold text-center text-white px-3 py-1.5 rounded-lg mb-4" style={{ backgroundColor: group.color }}>
+                {group.label}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {group.items.map(item => (
+                  <div key={item.name} className="flex flex-col items-center">
+                    <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                    <p className="text-[10px] text-gray-400 mb-2">{item.sub}</p>
+                    <GaugeChart value={item.rate} color={group.color} />
+                    <p className="text-xl font-bold -mt-1" style={{ color: group.color }}>{item.rate}%</p>
+                    <p className="text-[10px] text-gray-400 text-center leading-tight mt-1">At or Above<br />Benchmark</p>
+                  </div>
+                ))}
               </div>
-              <p className="text-sm font-bold text-gray-800">{a.label}</p>
-              <p className="text-[10px] text-gray-400 text-center leading-tight">{a.sub}</p>
-              <p className="text-3xl font-bold" style={{ color: a.color }}>{a.rate}%</p>
-              <div className="w-full bg-gray-100 rounded-full h-2">
-                <div className="h-2 rounded-full" style={{ width: `${a.rate}%`, backgroundColor: a.color }} />
-              </div>
-              <Link href={a.href} className="text-xs text-[#7C9A6E] hover:underline">View details →</Link>
+              <Link href={group.items[0].href} className="text-xs text-[#7C9A6E] hover:underline mt-3 block text-center">View details →</Link>
             </div>
           ))}
         </div>
