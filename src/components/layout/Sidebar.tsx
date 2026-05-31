@@ -57,7 +57,7 @@ export default function Sidebar() {
           <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border-2 border-yellow-400">
             <img src="/school-logo.jpg" alt="Logo" className="w-full h-full object-cover" />
           </div>
-          <p className="text-white font-bold text-xs leading-tight">INTEGRATED NHS</p>
+          <p className="text-white font-bold text-xs leading-tight">CONCEPCION INTEGRATED SCHOOL</p>
         </div>
         <button onClick={() => setOpen(!open)} className="text-white p-1">
           {open ? <X size={22} /> : <Menu size={22} />}
