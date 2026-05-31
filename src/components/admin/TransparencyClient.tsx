@@ -44,8 +44,12 @@ export default function TransparencyClient({
   }, [searchParams])
 
   // ── Totals ──
-  const totalIgp = fundRows.reduce((s, r) => s + Number(r.igp), 0)
-  const totalCanteen = fundRows.reduce((s, r) => s + Number(r.canteen), 0)
+  const igpCapTotal = fundRows.reduce((s, r) => s + Number(r.igp_capitalization), 0)
+  const igpReinvTotal = fundRows.reduce((s, r) => s + Number(r.igp_reinvestment), 0)
+  const igpBalTotal = igpCapTotal - igpReinvTotal
+  const canCapTotal = fundRows.reduce((s, r) => s + Number(r.canteen_capitalization), 0)
+  const canReinvTotal = fundRows.reduce((s, r) => s + Number(r.canteen_reinvestment), 0)
+  const canBalTotal = canCapTotal - canReinvTotal
   const totalAllocated = mooeRows.reduce((s, r) => s + Number(r.allocated), 0)
   const totalUtilized = mooeRows.reduce((s, r) => s + Number(r.utilized), 0)
   const totalBalance = totalAllocated - totalUtilized
@@ -75,7 +79,10 @@ export default function TransparencyClient({
 
   async function saveFunds() {
     setSaving(true)
-    for (const r of fundRows) await supabase.from('other_funds').update({ igp: r.igp, canteen: r.canteen }).eq('id', r.id)
+    for (const r of fundRows) await supabase.from('other_funds').update({
+      igp_capitalization: r.igp_capitalization, igp_reinvestment: r.igp_reinvestment,
+      canteen_capitalization: r.canteen_capitalization, canteen_reinvestment: r.canteen_reinvestment
+    }).eq('id', r.id)
     setSaving(false); setEditing(false)
   }
 
@@ -151,12 +158,12 @@ export default function TransparencyClient({
               <p className="text-lg font-bold text-[#3B82F6]">{fmt(totalBalance)}</p>
             </div>
             <div className="bg-white rounded-xl border shadow-sm p-4">
-              <p className="text-xs text-gray-500 uppercase font-bold mb-1">IGP Total</p>
-              <p className="text-lg font-bold text-[#8B5CF6]">{fmt(totalIgp)}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">IGP Balance</p>
+              <p className="text-lg font-bold text-[#8B5CF6]">{fmt(igpBalTotal)}</p>
             </div>
             <div className="bg-white rounded-xl border shadow-sm p-4">
-              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Canteen Total</p>
-              <p className="text-lg font-bold text-[#F59E0B]">{fmt(totalCanteen)}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Canteen Balance</p>
+              <p className="text-lg font-bold text-[#F59E0B]">{fmt(canBalTotal)}</p>
             </div>
           </div>
 
@@ -180,9 +187,9 @@ export default function TransparencyClient({
                       </>
                     ) : cat === 'Other Funds' && !editing ? (
                       <>
-                        <tr className="bg-white"><td className="px-4 py-2 text-gray-600">IGP Total</td><td className="px-4 py-2 text-right font-semibold text-[#7C9A6E]">{fmt(totalIgp)}</td></tr>
-                        <tr className="bg-gray-50"><td className="px-4 py-2 text-gray-600">Canteen Total</td><td className="px-4 py-2 text-right font-semibold text-[#3B82F6]">{fmt(totalCanteen)}</td></tr>
-                        <tr className="bg-white"><td className="px-4 py-2 text-gray-600">Combined Total</td><td className="px-4 py-2 text-right font-semibold">{fmt(totalIgp + totalCanteen)}</td></tr>
+                        <tr className="bg-white"><td className="px-4 py-2 text-gray-600">IGP Balance</td><td className="px-4 py-2 text-right font-semibold text-[#7C9A6E]">{fmt(igpBalTotal)}</td></tr>
+                        <tr className="bg-gray-50"><td className="px-4 py-2 text-gray-600">Canteen Balance</td><td className="px-4 py-2 text-right font-semibold text-[#3B82F6]">{fmt(canBalTotal)}</td></tr>
+                        <tr className="bg-white"><td className="px-4 py-2 text-gray-600">Combined Balance</td><td className="px-4 py-2 text-right font-semibold">{fmt(igpBalTotal + canBalTotal)}</td></tr>
                       </>
                     ) : (
                       rows.filter(r => r.category === cat).map((r, i) => (
@@ -351,23 +358,29 @@ export default function TransparencyClient({
       {/* ── OTHER FUNDS ── */}
       {tab === 'other-funds' && (
         <div className="space-y-5">
-          <div className="grid grid-cols-3 gap-4">
+          {/* Summary cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white rounded-xl border shadow-sm p-4">
-              <p className="text-xs text-gray-500 uppercase font-bold mb-1">IGP Total</p>
-              <p className="text-xl font-bold text-[#7C9A6E]">{fmt(totalIgp)}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">IGP Capitalization</p>
+              <p className="text-lg font-bold text-[#7C9A6E]">{fmt(igpCapTotal)}</p>
             </div>
             <div className="bg-white rounded-xl border shadow-sm p-4">
-              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Canteen Total</p>
-              <p className="text-xl font-bold text-[#3B82F6]">{fmt(totalCanteen)}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">IGP Balance</p>
+              <p className="text-lg font-bold text-[#3B82F6]">{fmt(igpBalTotal)}</p>
             </div>
             <div className="bg-white rounded-xl border shadow-sm p-4">
-              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Combined Total</p>
-              <p className="text-xl font-bold text-gray-800">{fmt(totalIgp + totalCanteen)}</p>
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Canteen Capitalization</p>
+              <p className="text-lg font-bold text-[#8B5CF6]">{fmt(canCapTotal)}</p>
+            </div>
+            <div className="bg-white rounded-xl border shadow-sm p-4">
+              <p className="text-xs text-gray-500 uppercase font-bold mb-1">Canteen Balance</p>
+              <p className="text-lg font-bold text-[#F59E0B]">{fmt(canBalTotal)}</p>
             </div>
           </div>
 
+          {/* Chart */}
           <div className="bg-white rounded-xl border shadow-sm p-4">
-            <p className="text-xs font-bold text-gray-500 uppercase mb-3">Monthly IGP & Canteen Funds</p>
+            <p className="text-xs font-bold text-gray-500 uppercase mb-3">Monthly IGP & Canteen — Capitalization vs Reinvestment</p>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={fundRows} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -375,42 +388,89 @@ export default function TransparencyClient({
                 <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: any) => fmt(v)} />
                 <Legend />
-                <Bar dataKey="igp" name="IGP" fill="#7C9A6E" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="canteen" name="Canteen" fill="#3B82F6" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="igp_capitalization" name="IGP Capitalization" fill="#7C9A6E" radius={[3,3,0,0]} />
+                <Bar dataKey="igp_reinvestment" name="IGP Reinvestment" fill="#a8c49a" radius={[3,3,0,0]} />
+                <Bar dataKey="canteen_capitalization" name="Canteen Capitalization" fill="#3B82F6" radius={[3,3,0,0]} />
+                <Bar dataKey="canteen_reinvestment" name="Canteen Reinvestment" fill="#93c5fd" radius={[3,3,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
+          {/* IGP Table */}
           <div className="bg-white rounded-xl border shadow-sm overflow-x-auto">
+            <div className="bg-[#7C9A6E] text-white px-4 py-2 text-sm font-bold">IGP (Income Generating Project)</div>
             <table className="w-full text-sm">
-              <thead className="bg-[#7C9A6E] text-white">
+              <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-4 py-2 text-left">Month</th>
-                  <th className="px-4 py-2 text-right">IGP</th>
-                  <th className="px-4 py-2 text-right">Canteen</th>
-                  <th className="px-4 py-2 text-right">Total</th>
+                  <th className="px-4 py-2 text-left text-gray-600">Month</th>
+                  <th className="px-4 py-2 text-right text-gray-600">Capitalization</th>
+                  <th className="px-4 py-2 text-right text-gray-600">Reinvestment</th>
+                  <th className="px-4 py-2 text-right text-gray-600">Balance</th>
                 </tr>
               </thead>
               <tbody>
-                {fundRows.map((r, i) => (
-                  <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-2 font-medium">{r.month}</td>
-                    <td className="px-4 py-2 text-right">
-                      {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.igp} onChange={e => updateFund(r.id, 'igp', e.target.value)} />
-                        : <span className="text-[#7C9A6E] font-semibold">{fmt(r.igp)}</span>}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.canteen} onChange={e => updateFund(r.id, 'canteen', e.target.value)} />
-                        : <span className="text-[#3B82F6] font-semibold">{fmt(r.canteen)}</span>}
-                    </td>
-                    <td className="px-4 py-2 text-right font-bold">{fmt(Number(r.igp) + Number(r.canteen))}</td>
-                  </tr>
-                ))}
+                {fundRows.map((r, i) => {
+                  const bal = Number(r.igp_capitalization) - Number(r.igp_reinvestment)
+                  return (
+                    <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="px-4 py-2 font-medium">{r.month}</td>
+                      <td className="px-4 py-2 text-right">
+                        {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.igp_capitalization} onChange={e => updateFund(r.id, 'igp_capitalization', e.target.value)} />
+                          : <span className="text-[#7C9A6E] font-semibold">{fmt(r.igp_capitalization)}</span>}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.igp_reinvestment} onChange={e => updateFund(r.id, 'igp_reinvestment', e.target.value)} />
+                          : <span className="text-[#3B82F6] font-semibold">{fmt(r.igp_reinvestment)}</span>}
+                      </td>
+                      <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
+                    </tr>
+                  )
+                })}
                 <tr className="bg-[#F5C842]/20 font-bold border-t-2 border-gray-300">
                   <td className="px-4 py-2">TOTAL</td>
-                  <td className="px-4 py-2 text-right text-[#7C9A6E]">{fmt(totalIgp)}</td>
-                  <td className="px-4 py-2 text-right text-[#3B82F6]">{fmt(totalCanteen)}</td>
-                  <td className="px-4 py-2 text-right">{fmt(totalIgp + totalCanteen)}</td>
+                  <td className="px-4 py-2 text-right text-[#7C9A6E]">{fmt(igpCapTotal)}</td>
+                  <td className="px-4 py-2 text-right text-[#3B82F6]">{fmt(igpReinvTotal)}</td>
+                  <td className="px-4 py-2 text-right" style={{ color: igpBalTotal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(igpBalTotal)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Canteen Table */}
+          <div className="bg-white rounded-xl border shadow-sm overflow-x-auto">
+            <div className="bg-[#3B82F6] text-white px-4 py-2 text-sm font-bold">Canteen</div>
+            <table className="w-full text-sm">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-2 text-left text-gray-600">Month</th>
+                  <th className="px-4 py-2 text-right text-gray-600">Capitalization</th>
+                  <th className="px-4 py-2 text-right text-gray-600">Reinvestment</th>
+                  <th className="px-4 py-2 text-right text-gray-600">Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fundRows.map((r, i) => {
+                  const bal = Number(r.canteen_capitalization) - Number(r.canteen_reinvestment)
+                  return (
+                    <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="px-4 py-2 font-medium">{r.month}</td>
+                      <td className="px-4 py-2 text-right">
+                        {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.canteen_capitalization} onChange={e => updateFund(r.id, 'canteen_capitalization', e.target.value)} />
+                          : <span className="text-[#3B82F6] font-semibold">{fmt(r.canteen_capitalization)}</span>}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.canteen_reinvestment} onChange={e => updateFund(r.id, 'canteen_reinvestment', e.target.value)} />
+                          : <span className="text-[#8B5CF6] font-semibold">{fmt(r.canteen_reinvestment)}</span>}
+                      </td>
+                      <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
+                    </tr>
+                  )
+                })}
+                <tr className="bg-[#F5C842]/20 font-bold border-t-2 border-gray-300">
+                  <td className="px-4 py-2">TOTAL</td>
+                  <td className="px-4 py-2 text-right text-[#3B82F6]">{fmt(canCapTotal)}</td>
+                  <td className="px-4 py-2 text-right text-[#8B5CF6]">{fmt(canReinvTotal)}</td>
+                  <td className="px-4 py-2 text-right" style={{ color: canBalTotal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(canBalTotal)}</td>
                 </tr>
               </tbody>
             </table>

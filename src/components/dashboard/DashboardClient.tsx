@@ -67,8 +67,8 @@ export default function DashboardClient({
   const totalStudents = lastAttendance.present + lastAttendance.absent
   const adaRate = totalStudents > 0 ? ((lastAttendance.present / totalStudents) * 100).toFixed(1) : '0'
 
-  const totalIgp = otherFunds.reduce((s: number, r: any) => s + Number(r.igp), 0)
-  const totalCanteen = otherFunds.reduce((s: number, r: any) => s + Number(r.canteen), 0)
+  const totalIgp = otherFunds.reduce((s: number, r: any) => s + Number(r.igp_capitalization) - Number(r.igp_reinvestment), 0)
+  const totalCanteen = otherFunds.reduce((s: number, r: any) => s + Number(r.canteen_capitalization) - Number(r.canteen_reinvestment), 0)
   const totalAllocated = mooeMonthly.reduce((s: number, r: any) => s + Number(r.allocated), 0)
   const totalUtilized = mooeMonthly.reduce((s: number, r: any) => s + Number(r.utilized), 0)
   const totalBalance = totalAllocated - totalUtilized
