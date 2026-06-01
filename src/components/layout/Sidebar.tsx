@@ -81,7 +81,7 @@ export default function Sidebar() {
           </div>
           <div>
           <p className="text-white font-bold text-xs leading-tight">CONCEPCION INTEGRATED SCHOOL</p>
-            <p className="text-green-300 text-xs mt-0.5">School ID: 108912</p>
+            <p className="text-green-300 text-xs mt-0.5">School ID: 502245</p>
           </div>
         </div>
         <nav className="flex-1 py-2 overflow-y-auto">
@@ -101,7 +101,7 @@ export default function Sidebar() {
             </div>
             <div>
               <p className="text-white font-bold text-xs leading-tight">CONCEPCION INTEGRATED SCHOOL</p>
-              <p className="text-green-300 text-xs mt-0.5">School ID: 108912</p>
+              <p className="text-green-300 text-xs mt-0.5">School ID: 502245</p>
             </div>
           </div>
         </div>
