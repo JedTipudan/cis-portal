@@ -300,3 +300,37 @@ CREATE POLICY "Admin write documents" ON documents FOR ALL USING (auth.role() = 
 CREATE POLICY "Admin write transparency" ON transparency FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write achievements" ON achievements FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write priority_needs" ON priority_needs FOR ALL USING (auth.role() = 'authenticated');
+
+-- Nutritional Status
+CREATE TABLE IF NOT EXISTS nutritional_status (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  grade_level TEXT NOT NULL,
+  severely_wasted INT DEFAULT 0,
+  wasted INT DEFAULT 0,
+  normal_bmi INT DEFAULT 0,
+  overweight INT DEFAULT 0,
+  obese INT DEFAULT 0,
+  severely_stunted INT DEFAULT 0,
+  stunted INT DEFAULT 0,
+  normal_hfa INT DEFAULT 0,
+  tall INT DEFAULT 0,
+  school_year TEXT DEFAULT '2024-2025',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE nutritional_status ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public read nutritional_status" ON nutritional_status FOR SELECT USING (true);
+CREATE POLICY "Admin write nutritional_status" ON nutritional_status FOR ALL USING (auth.role() = 'authenticated');
+
+INSERT INTO nutritional_status (grade_level, severely_wasted, wasted, normal_bmi, overweight, obese, severely_stunted, stunted, normal_hfa, tall, school_year) VALUES
+('Kinder',   2, 5, 72, 4, 2, 3, 6, 68, 8,  '2024-2025'),
+('Grade 1',  3, 6, 75, 5, 3, 4, 7, 70, 11, '2024-2025'),
+('Grade 2',  2, 5, 78, 6, 4, 3, 5, 74, 16, '2024-2025'),
+('Grade 3',  3, 7, 76, 7, 4, 4, 6, 72, 15, '2024-2025'),
+('Grade 4',  2, 6, 79, 8, 5, 3, 7, 75, 15, '2024-2025'),
+('Grade 5',  3, 5, 82, 7, 5, 4, 6, 78, 12, '2024-2025'),
+('Grade 6',  2, 6, 80, 9, 6, 3, 5, 76, 14, '2024-2025'),
+('Grade 7',  3, 7, 78, 8, 6, 4, 7, 74, 11, '2024-2025'),
+('Grade 8',  2, 6, 80, 9, 7, 3, 6, 78, 20, '2024-2025'),
+('Grade 9',  3, 5, 82, 8, 7, 4, 5, 80, 12, '2024-2025'),
+('Grade 10', 2, 6, 83, 9, 6, 3, 6, 82, 14, '2024-2025');

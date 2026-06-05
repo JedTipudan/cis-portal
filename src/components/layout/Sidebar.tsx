@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   LayoutDashboard, School, Users, CalendarCheck, TrendingUp,
-  UserCheck, Building2, BookOpen, Handshake, FileText, Eye, Settings, Menu, X
+  UserCheck, Building2, BookOpen, Handshake, FileText, Eye, Settings, Menu, X, Apple
 } from 'lucide-react'
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { href: '/dashboard/school-profile', label: 'School Profile', icon: School },
   { href: '/dashboard/enrollment', label: 'Enrollment', icon: Users },
   { href: '/dashboard/attendance', label: 'Attendance', icon: CalendarCheck },
+  { href: '/dashboard/nutritional-status', label: 'Nutritional Status', icon: Apple },
   { href: '/dashboard/performance', label: 'Performance', icon: TrendingUp },
   { href: '/dashboard/personnel', label: 'Personnel', icon: UserCheck },
   { href: '/dashboard/facilities', label: 'Facilities & Resources', icon: Building2 },

@@ -44,6 +44,7 @@ interface Props {
   programsMonthly: any[]
   reading: any[]
   philiri: any[]
+  nutritional: any[]
   isAdmin: boolean
 }
 
@@ -77,7 +78,7 @@ function getMpsByGrade(performance: any[]) {
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
   programs, transparency, achievements, needs, attendance, learnerProfile,
-  otherFunds, mooeMonthly, programsMonthly, reading, philiri, isAdmin
+  otherFunds, mooeMonthly, programsMonthly, reading, philiri, nutritional, isAdmin
 }: Props) {
   const totalEnrollment = enrollment.reduce((s, r) => s + r.male + r.female, 0)
   const totalMale = enrollment.reduce((s, r) => s + r.male, 0)
@@ -419,6 +420,48 @@ export default function DashboardClient({
             <p><span className="text-gray-400">Source: </span>LIS, EBEIS, School Forms, Manual Records</p>
             <p><span className="text-gray-400">Prepared By: </span>School Information Unit</p>
             <p><span className="text-gray-400">Updated: </span>{dateLabel}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Nutritional Status Summary */}
+      <div className="bg-white rounded-xl p-4 shadow-sm border">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Nutritional Status Summary</p>
+          <Link href="/dashboard/nutritional-status" className="text-xs text-[#7C9A6E] hover:underline">View details →</Link>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* BMI */}
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Body Mass Index (BMI)</p>
+            <div className="grid grid-cols-5 gap-1">
+              {[['Sev. Wasted','#EF4444','severely_wasted'],['Wasted','#F97316','wasted'],['Normal','#7C9A6E','normal_bmi'],['Overweight','#F59E0B','overweight'],['Obese','#8B5CF6','obese']].map(([label, color, field]) => {
+                const total = nutritional.reduce((s, r) => s + Number(r[field as string] || 0), 0)
+                return (
+                  <div key={field as string} className="text-center">
+                    <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{ backgroundColor: color as string }} />
+                    <p className="text-sm font-bold" style={{ color: color as string }}>{total}</p>
+                    <p className="text-[9px] text-gray-400 leading-tight">{label}</p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+          {/* HFA */}
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-2">Height-for-Age (HFA)</p>
+            <div className="grid grid-cols-4 gap-1">
+              {[['Sev. Stunted','#EF4444','severely_stunted'],['Stunted','#F97316','stunted'],['Normal','#7C9A6E','normal_hfa'],['Tall','#3B82F6','tall']].map(([label, color, field]) => {
+                const total = nutritional.reduce((s, r) => s + Number(r[field as string] || 0), 0)
+                return (
+                  <div key={field as string} className="text-center">
+                    <div className="w-2 h-2 rounded-full mx-auto mb-1" style={{ backgroundColor: color as string }} />
+                    <p className="text-sm font-bold" style={{ color: color as string }}>{total}</p>
+                    <p className="text-[9px] text-gray-400 leading-tight">{label}</p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>

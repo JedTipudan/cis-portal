@@ -29,12 +29,14 @@ export default function DashboardPageClient({ profile, isAdmin }: { profile: any
       supabase.from('programs_monthly').select('*').order('id'),
       supabase.from('reading_assessment').select('*').eq('school_year', sy).order('grade_level'),
       supabase.from('philiri_assessment').select('*').eq('school_year', sy).order('grade_level'),
+      supabase.from('nutritional_status').select('*').eq('school_year', sy).order('grade_level'),
     ]).then(([
       { data: enrollment }, { data: performance }, { data: kpi },
       { data: personnel }, { data: facilities }, { data: programs },
       { data: transparency }, { data: achievements }, { data: needs },
       { data: attendance }, { data: learnerProfile }, { data: otherFunds },
-      { data: mooeMonthly }, { data: programsMonthly }, { data: reading }, { data: philiri },
+      { data: mooeMonthly }, { data: programsMonthly }, { data: reading },
+      { data: philiri }, { data: nutritional },
     ]) => {
       setData({
         enrollment: sortEnrollment(enrollment || []),
@@ -53,17 +55,12 @@ export default function DashboardPageClient({ profile, isAdmin }: { profile: any
         programsMonthly: programsMonthly || [],
         reading: reading || [],
         philiri: philiri || [],
+        nutritional: nutritional || [],
       })
     })
   }, [schoolYear])
 
   if (!data) return <div className="flex items-center justify-center h-60 text-gray-400 text-sm">Loading...</div>
 
-  return (
-    <DashboardClient
-      profile={profile}
-      {...data}
-      isAdmin={isAdmin}
-    />
-  )
+  return <DashboardClient profile={profile} {...data} isAdmin={isAdmin} />
 }
