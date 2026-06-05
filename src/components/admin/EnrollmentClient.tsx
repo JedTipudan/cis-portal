@@ -14,11 +14,12 @@ function getColor(category: string, index: number) {
 }
 
 export default function EnrollmentClient({
-  enrollment, learnerProfile, isAdmin
+  enrollment, learnerProfile, isAdmin, schoolYear = '2024-2025'
 }: {
   enrollment: any[]
   learnerProfile: any[]
   isAdmin: boolean
+  schoolYear?: string
 }) {
   const [rows, setRows] = useState(enrollment)
   const [profileRows, setProfileRows] = useState(learnerProfile)
@@ -45,7 +46,7 @@ export default function EnrollmentClient({
     setSaving(true)
     for (const r of profileRows) {
       if (r.isNew) {
-        await supabase.from('learner_profile').insert({ category: r.category, count: r.count, school_year: r.school_year || '2024-2025' })
+        await supabase.from('learner_profile').insert({ category: r.category, count: r.count, school_year: schoolYear })
       } else {
         await supabase.from('learner_profile').update({ category: r.category, count: r.count }).eq('id', r.id)
       }

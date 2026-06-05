@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { Pencil, Save, X } from 'lucide-react'
 
-export default function AttendanceClient({ attendance, isAdmin }: { attendance: any[]; isAdmin: boolean }) {
+export default function AttendanceClient({ attendance, isAdmin, schoolYear = '2024-2025' }: { attendance: any[]; isAdmin: boolean; schoolYear?: string }) {
   const [rows, setRows] = useState(attendance)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -28,7 +28,7 @@ export default function AttendanceClient({ attendance, isAdmin }: { attendance: 
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Attendance</h1>
-          <p className="text-gray-500 text-sm">Average Daily Attendance: <strong>{ada}%</strong></p>
+          <p className="text-gray-500 text-sm">SY {schoolYear} — Average Daily Attendance: <strong>{ada}%</strong></p>
         </div>
         {isAdmin && !editing && (
           <button onClick={() => setEditing(true)} className="flex items-center gap-2 bg-[#7C9A6E] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#5a7a52]">

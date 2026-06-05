@@ -144,9 +144,9 @@ function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades 
 }
 
 export default function PerformanceClient({
-  performance, kpi, reading, philiri, isAdmin,
+  performance, kpi, reading, philiri, isAdmin, schoolYear = '2024-2025',
 }: {
-  performance: any[]; kpi: any[]; reading: any[]; philiri: any[]; isAdmin: boolean
+  performance: any[]; kpi: any[]; reading: any[]; philiri: any[]; isAdmin: boolean; schoolYear?: string
 }) {
   const searchParams = useSearchParams()
   const [tab, setTab] = useState<'kpi'|'academic'|'reading'>('kpi')
@@ -222,7 +222,7 @@ export default function PerformanceClient({
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Performance</h1>
-          <p className="text-gray-500 text-sm">School Year 2024–2025</p>
+          <p className="text-gray-500 text-sm">School Year {schoolYear}</p>
         </div>
         {isAdmin && !editing && (
           <button onClick={() => setEditing(true)} className="flex items-center gap-2 bg-[#7C9A6E] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#5a7a52]">
