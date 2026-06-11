@@ -2,8 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
 const SCHOOL_YEARS = [
-  '2025-2026', '2024-2025', '2023-2024', '2022-2023',
-  '2021-2022', '2020-2021', '2019-2020', '2018-2019',
+  '2025-2026', '2024-2025', '2023-2024',
 ]
 
 const KEY = 'cis_school_year'
