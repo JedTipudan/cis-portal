@@ -1,9 +1,16 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 
-const SCHOOL_YEARS = [
-  '2025-2026', '2024-2025', '2023-2024',
-]
+function generateSchoolYears() {
+  const current = new Date().getFullYear()
+  const years = []
+  for (let y = current + 1; y >= 2023; y--) {
+    years.push(`${y}-${y + 1}`)
+  }
+  return years
+}
+
+const SCHOOL_YEARS = generateSchoolYears()
 
 const KEY = 'cis_school_year'
 
