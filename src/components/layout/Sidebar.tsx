@@ -18,7 +18,7 @@ const navItems = [
   { href: '/dashboard/facilities', label: 'Facilities & Resources', icon: Building2 },
   { href: '/dashboard/programs', label: 'Programs & Interventions', icon: BookOpen },
   { href: '/dashboard/stakeholders', label: 'Stakeholders', icon: Handshake },
-  { href: '/dashboard/reports', label: 'Reports & Documents', icon: FileText },
+  { href: '/dashboard/reports', label: 'Reports, Documents & Issuances', icon: FileText },
   { href: '/dashboard/transparency', label: 'Transparency Board', icon: Eye },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]

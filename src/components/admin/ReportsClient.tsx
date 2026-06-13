@@ -40,7 +40,7 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
   return (
     <div>
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-gray-800">Reports & Documents</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Reports, Documents & Issuances</h1>
         <p className="text-gray-500 text-sm">School reports and official documents</p>
       </div>
 
