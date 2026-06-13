@@ -98,6 +98,13 @@ export default function DashboardClient({
   const lastProg = programsMonthly[programsMonthly.length - 1] || { implemented: 0, ongoing: 0, completed: 0 }
   const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 
+  const [dateLabel, setDateLabel] = useState('')
+  const [selectedTerm, setSelectedTerm] = useState('Term 1')
+  const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
+  useEffect(() => {
+    setDateLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
+  }, [])
+
   // Reading assessment summary for dashboard (filtered by selected reading period)
   const filteredReading = reading.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)
   const filteredPhiliri = philiri.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)
@@ -117,13 +124,6 @@ export default function DashboardClient({
   const rmaProficient = filteredReading.filter(r => r.assessment_type === 'RMA')
     .reduce((s, r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
   const rmaRate = rmaTotal > 0 ? Math.round((rmaProficient / rmaTotal) * 100) : 0
-
-  const [dateLabel, setDateLabel] = useState('')
-  const [selectedTerm, setSelectedTerm] = useState('Term 1')
-  const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
-  useEffect(() => {
-    setDateLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
-  }, [])
 
   const enrollmentChartData = enrollment.map(r => ({
     name: r.grade_level.replace('Grade ', 'G').replace('Kinder', 'K'),
