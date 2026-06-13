@@ -10,6 +10,8 @@ import {
 
 const GRADE_LEVELS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
 const PHILIRI_GRADES = ['Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
+const TERMS = ['Term 1','Term 2','Term 3']
+const READING_PERIODS = ['BoSy','MoSY','EoSY']
 
 // CRLA
 const CRLA_GRADES = ['Grade 1','Grade 2','Grade 3']
@@ -153,6 +155,8 @@ export default function PerformanceClient({
   const [selectedGrade, setSelectedGrade] = useState('Grade 1')
   const [selectedAssessment, setSelectedAssessment] = useState<'CRLA'|'Phil-IRI'|'RMA'>('CRLA')
   const [philiriSubcat, setPhiliriSubcat] = useState('overall')
+  const [selectedTerm, setSelectedTerm] = useState('Term 1')
+  const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
 
   useEffect(() => {
     const t = searchParams.get('tab')
@@ -168,13 +172,13 @@ export default function PerformanceClient({
   const [saving, setSaving] = useState(false)
   const supabase = createClient()
 
-  const gradeSubjects = perfRows.filter(r => r.grade_level === selectedGrade)
+  const gradeSubjects = perfRows.filter(r => r.grade_level === selectedGrade && (r.term || 'Term 1') === selectedTerm)
   const gradeMps = gradeSubjects.length
     ? (gradeSubjects.reduce((s,r) => s+Number(r.mps),0)/gradeSubjects.length).toFixed(1) : '0'
 
   // CRLA / RMA data
-  const crlaData = CRLA_GRADES.map(g => readingRows.find(r => r.assessment_type==='CRLA' && r.grade_level===g)).filter(Boolean)
-  const rmaData = GRADE_LEVELS.map(g => readingRows.find(r => r.assessment_type==='RMA' && r.grade_level===g)).filter(Boolean)
+  const crlaData = CRLA_GRADES.map(g => readingRows.find(r => r.assessment_type==='CRLA' && r.grade_level===g && (r.reading_period || 'BoSy') === selectedReadingPeriod)).filter(Boolean)
+  const rmaData = GRADE_LEVELS.map(g => readingRows.find(r => r.assessment_type==='RMA' && r.grade_level===g && (r.reading_period || 'BoSy') === selectedReadingPeriod)).filter(Boolean)
 
   const currentSubcat = PHILIRI_SUBCATS.find(s => s.key === philiriSubcat)!
 
@@ -183,12 +187,13 @@ export default function PerformanceClient({
     if (tab==='kpi') {
       for (const r of kpiRows) await supabase.from('kpi').update({value:r.value}).eq('id',r.id)
     } else if (tab==='academic') {
-      for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps}).eq('id',r.id)
+      for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps, term:selectedTerm}).eq('id',r.id)
     } else {
       if (selectedAssessment==='Phil-IRI') {
         for (const r of philiriRows) {
           const u: any = {}
           PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { u[f]=r[f] }))
+          u.reading_period = selectedReadingPeriod
           await supabase.from('philiri_assessment').update(u).eq('id',r.id)
         }
       } else {
@@ -197,6 +202,7 @@ export default function PerformanceClient({
         for (const r of rows) {
           const u: any = {}
           fields.forEach(f => { u[f]=r[f] })
+          u.reading_period = selectedReadingPeriod
           await supabase.from('reading_assessment').update(u).eq('id',r.id)
         }
       }
@@ -305,6 +311,16 @@ export default function PerformanceClient({
       {/* ── ACADEMIC TAB ── */}
       {tab==='academic' && (
         <div className="space-y-4">
+          {/* Term Selector */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-semibold text-gray-500">Term:</span>
+            {TERMS.map(t => (
+              <button key={t} onClick={() => setSelectedTerm(t)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
           <div className="flex flex-wrap gap-2">
             {GRADE_LEVELS.map(g => (
               <button key={g} onClick={() => setSelectedGrade(g)}
@@ -369,6 +385,16 @@ export default function PerformanceClient({
       {/* ── READING ASSESSMENT TAB ── */}
       {tab==='reading' && (
         <div className="space-y-4">
+          {/* Reading Period Selector */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-semibold text-gray-500">Period:</span>
+            {READING_PERIODS.map(p => (
+              <button key={p} onClick={() => setSelectedReadingPeriod(p)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedReadingPeriod===p?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {p === 'BoSy' ? 'BoSy (Beginning of School Year)' : p === 'MoSY' ? 'MoSY (Middle of School Year)' : 'EoSY (End of School Year)'}
+              </button>
+            ))}
+          </div>
           {/* Assessment selector */}
           <div className="flex flex-wrap gap-2">
             {(['CRLA','Phil-IRI','RMA'] as const).map(a => (
@@ -389,7 +415,7 @@ export default function PerformanceClient({
                 <strong>CRLA</strong> — Classroom Reading Level Assessment for Grades 1–3. Measures early reading fluency and comprehension.
               </div>
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='CRLA')}
+                data={readingRows.filter(r => r.assessment_type==='CRLA' && (r.reading_period || 'BoSy') === selectedReadingPeriod)}
                 fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
                 editing={editing} onUpdate={updateReading} grades={CRLA_GRADES}
               />
@@ -414,7 +440,7 @@ export default function PerformanceClient({
               </div>
 
               <ReadingTable
-                data={philiriRows}
+                data={philiriRows.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)}
                 fields={currentSubcat.fields}
                 levels={currentSubcat.levels}
                 colors={currentSubcat.colors}
@@ -432,7 +458,7 @@ export default function PerformanceClient({
                 <strong>RMA</strong> — Reading Miscue Analysis for Grades 1–10. Qualitative analysis of reading errors to guide targeted intervention.
               </div>
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='RMA')}
+                data={readingRows.filter(r => r.assessment_type==='RMA' && (r.reading_period || 'BoSy') === selectedReadingPeriod)}
                 fields={RMA_FIELDS} levels={RMA_LEVELS} colors={RMA_COLORS}
                 editing={editing} onUpdate={updateReading} grades={GRADE_LEVELS}
               />
