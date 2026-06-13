@@ -106,8 +106,8 @@ export default function DashboardClient({
   }, [])
 
   // Reading assessment summary for dashboard (filtered by selected reading period)
-  const filteredReading = reading.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)
-  const filteredPhiliri = philiri.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)
+  const filteredReading = reading.filter(r => r.reading_period === selectedReadingPeriod)
+  const filteredPhiliri = philiri.filter(r => r.reading_period === selectedReadingPeriod)
 
   const crlaTotal = filteredReading.filter(r => r.assessment_type === 'CRLA')
     .reduce((s, r) => s + Number(r.low_emerging||0) + Number(r.high_emerging||0) + Number(r.developing||0) + Number(r.transition||0) + Number(r.grade_level_reader||0), 0)
@@ -131,7 +131,7 @@ export default function DashboardClient({
   }))
 
   // MPS per grade (averaged across all subjects, filtered by selected term)
-  const filteredPerformance = performance.filter(p => (p.term || 'Term 1') === selectedTerm)
+  const filteredPerformance = performance.filter(p => p.term === selectedTerm)
   const mpsByGrade = getMpsByGrade(filteredPerformance)
   const overallMps = mpsByGrade.length
     ? (mpsByGrade.reduce((s, g) => s + g.mps, 0) / mpsByGrade.length).toFixed(1)
