@@ -176,6 +176,8 @@ export default function PerformanceClient({
   const gradeMps = gradeSubjects.length
     ? (gradeSubjects.reduce((s,r) => s+Number(r.mps),0)/gradeSubjects.length).toFixed(1) : '0'
 
+  const hasPerfDataForTerm = perfRows.some(r => r.term === selectedTerm)
+
   // CRLA / RMA data
   const crlaData = CRLA_GRADES.map(g => readingRows.find(r => r.assessment_type==='CRLA' && r.grade_level===g && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)).filter(Boolean)
   const rmaData = GRADE_LEVELS.map(g => readingRows.find(r => r.assessment_type==='RMA' && r.grade_level===g && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)).filter(Boolean)
@@ -237,6 +239,49 @@ export default function PerformanceClient({
     setReadingRows(readingRows.map(r => r.id===id ? {...r,[f]:v} : r))
   const updatePhiliri = (id:string,f:string,v:string) =>
     setPhiliriRows(philiriRows.map(r => r.id===id ? {...r,[f]:v} : r))
+
+  async function initData() {
+    setSaving(true)
+    if (selectedAssessment === 'Phil-IRI') {
+      const toInsert = PHILIRI_GRADES.map(g => {
+        const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm }
+        PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f] = 0 }))
+        return row
+      })
+      const { data } = await supabase.from('philiri_assessment').insert(toInsert).select()
+      if (data) setPhiliriRows([...philiriRows, ...data])
+    } else {
+      const grades = selectedAssessment === 'CRLA' ? CRLA_GRADES : GRADE_LEVELS
+      const fields = selectedAssessment === 'CRLA' ? CRLA_FIELDS : RMA_FIELDS
+      const toInsert = grades.map(g => {
+        const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
+        fields.forEach(f => { row[f] = 0 })
+        return row
+      })
+      const { data } = await supabase.from('reading_assessment').insert(toInsert).select()
+      if (data) setReadingRows([...readingRows, ...data])
+    }
+    setSaving(false)
+    setEditing(true)
+  }
+
+  async function initPerformance() {
+    setSaving(true)
+    const subjects = [...new Set(perfRows.map(r => r.subject))]
+    if (subjects.length === 0) {
+      subjects.push('Math', 'English', 'Science', 'Filipino', 'Araling Panlipunan', 'MAPEH', 'EPP/TLE', 'Values Education')
+    }
+    const toInsert: any[] = []
+    for (const g of GRADE_LEVELS) {
+      for (const s of subjects) {
+        toInsert.push({ grade_level: g, subject: s, mps: 0, term: selectedTerm })
+      }
+    }
+    const { data } = await supabase.from('performance').insert(toInsert).select()
+    if (data) setPerfRows([...perfRows, ...data])
+    setSaving(false)
+    setEditing(true)
+  }
 
   return (
     <div>
@@ -337,6 +382,16 @@ export default function PerformanceClient({
               </button>
             ))}
           </div>
+          {/* No data banner for academic */}
+          {isAdmin && !hasPerfDataForTerm && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+              <p className="text-sm text-yellow-700">No performance data for <strong>{selectedTerm}</strong>. Create empty rows to start entering data.</p>
+              <button onClick={initPerformance} disabled={saving}
+                className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
+                {saving ? 'Creating...' : 'Create Data'}
+              </button>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             {GRADE_LEVELS.map(g => (
               <button key={g} onClick={() => setSelectedGrade(g)}
@@ -401,6 +456,16 @@ export default function PerformanceClient({
       {/* ── READING ASSESSMENT TAB ── */}
       {tab==='reading' && (
         <div className="space-y-4">
+          {/* Term Selector */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs font-semibold text-gray-500">Term:</span>
+            {TERMS.map(t => (
+              <button key={t} onClick={() => setSelectedTerm(t)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
           {/* Reading Period Selector */}
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-xs font-semibold text-gray-500">Period:</span>
@@ -423,6 +488,23 @@ export default function PerformanceClient({
               </button>
             ))}
           </div>
+
+          {/* No data banner */}
+          {(() => {
+            const noData = selectedAssessment === 'Phil-IRI'
+              ? !philiriRows.some(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
+              : !readingRows.some(r => r.assessment_type === selectedAssessment && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
+            if (!noData || !isAdmin) return null
+            return (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+                <p className="text-sm text-yellow-700">No data for <strong>{selectedTerm}</strong> — <strong>{selectedReadingPeriod}</strong>. Create empty rows to start entering data.</p>
+                <button onClick={initData} disabled={saving}
+                  className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
+                  {saving ? 'Creating...' : 'Create Data'}
+                </button>
+              </div>
+            )
+          })()}
 
           {/* CRLA */}
           {selectedAssessment==='CRLA' && (
