@@ -177,8 +177,8 @@ export default function PerformanceClient({
     ? (gradeSubjects.reduce((s,r) => s+Number(r.mps),0)/gradeSubjects.length).toFixed(1) : '0'
 
   // CRLA / RMA data
-  const crlaData = CRLA_GRADES.map(g => readingRows.find(r => r.assessment_type==='CRLA' && r.grade_level===g && r.reading_period === selectedReadingPeriod)).filter(Boolean)
-  const rmaData = GRADE_LEVELS.map(g => readingRows.find(r => r.assessment_type==='RMA' && r.grade_level===g && r.reading_period === selectedReadingPeriod)).filter(Boolean)
+  const crlaData = CRLA_GRADES.map(g => readingRows.find(r => r.assessment_type==='CRLA' && r.grade_level===g && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)).filter(Boolean)
+  const rmaData = GRADE_LEVELS.map(g => readingRows.find(r => r.assessment_type==='RMA' && r.grade_level===g && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)).filter(Boolean)
 
   const currentSubcat = PHILIRI_SUBCATS.find(s => s.key === philiriSubcat)!
 
@@ -194,6 +194,7 @@ export default function PerformanceClient({
           const u: any = {}
           PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { u[f]=r[f] }))
           u.reading_period = selectedReadingPeriod
+          u.term = selectedTerm
           await supabase.from('philiri_assessment').update(u).eq('id',r.id)
         }
       } else {
@@ -203,6 +204,7 @@ export default function PerformanceClient({
           const u: any = {}
           fields.forEach(f => { u[f]=r[f] })
           u.reading_period = selectedReadingPeriod
+          u.term = selectedTerm
           await supabase.from('reading_assessment').update(u).eq('id',r.id)
         }
       }
@@ -415,7 +417,7 @@ export default function PerformanceClient({
                 <strong>CRLA</strong> — Classroom Reading Level Assessment for Grades 1–3. Measures early reading fluency and comprehension.
               </div>
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='CRLA' && r.reading_period === selectedReadingPeriod)}
+                data={readingRows.filter(r => r.assessment_type==='CRLA' && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
                 fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
                 editing={editing} onUpdate={updateReading} grades={CRLA_GRADES}
               />
@@ -440,7 +442,7 @@ export default function PerformanceClient({
               </div>
 
               <ReadingTable
-                data={philiriRows.filter(r => r.reading_period === selectedReadingPeriod)}
+                data={philiriRows.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
                 fields={currentSubcat.fields}
                 levels={currentSubcat.levels}
                 colors={currentSubcat.colors}
@@ -458,7 +460,7 @@ export default function PerformanceClient({
                 <strong>RMA</strong> — Reading Miscue Analysis for Grades 1–10. Qualitative analysis of reading errors to guide targeted intervention.
               </div>
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='RMA' && r.reading_period === selectedReadingPeriod)}
+                data={readingRows.filter(r => r.assessment_type==='RMA' && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
                 fields={RMA_FIELDS} levels={RMA_LEVELS} colors={RMA_COLORS}
                 editing={editing} onUpdate={updateReading} grades={GRADE_LEVELS}
               />

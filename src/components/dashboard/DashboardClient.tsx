@@ -106,8 +106,8 @@ export default function DashboardClient({
   }, [])
 
   // Reading assessment summary for dashboard (filtered by selected reading period)
-  const filteredReading = reading.filter(r => r.reading_period === selectedReadingPeriod)
-  const filteredPhiliri = philiri.filter(r => r.reading_period === selectedReadingPeriod)
+  const filteredReading = reading.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
+  const filteredPhiliri = philiri.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
 
   const crlaTotal = filteredReading.filter(r => r.assessment_type === 'CRLA')
     .reduce((s, r) => s + Number(r.low_emerging||0) + Number(r.high_emerging||0) + Number(r.developing||0) + Number(r.transition||0) + Number(r.grade_level_reader||0), 0)
