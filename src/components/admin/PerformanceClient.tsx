@@ -190,22 +190,36 @@ export default function PerformanceClient({
       for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps, term:selectedTerm}).eq('id',r.id)
     } else {
       if (selectedAssessment==='Phil-IRI') {
-        for (const r of philiriRows) {
-          const u: any = {}
-          PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { u[f]=r[f] }))
-          u.reading_period = selectedReadingPeriod
-          u.term = selectedTerm
-          await supabase.from('philiri_assessment').update(u).eq('id',r.id)
+        for (const g of PHILIRI_GRADES) {
+          const existing = philiriRows.find(r => r.grade_level===g && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)
+          if (existing) {
+            const u: any = {}
+            PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { u[f]=existing[f] }))
+            u.reading_period = selectedReadingPeriod
+            u.term = selectedTerm
+            await supabase.from('philiri_assessment').update(u).eq('id',existing.id)
+          } else {
+            const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm }
+            PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f]=0 }))
+            await supabase.from('philiri_assessment').insert(row)
+          }
         }
       } else {
-        const rows = selectedAssessment==='CRLA' ? crlaData : rmaData
+        const grades = selectedAssessment==='CRLA' ? CRLA_GRADES : GRADE_LEVELS
         const fields = selectedAssessment==='CRLA' ? CRLA_FIELDS : RMA_FIELDS
-        for (const r of rows) {
-          const u: any = {}
-          fields.forEach(f => { u[f]=r[f] })
-          u.reading_period = selectedReadingPeriod
-          u.term = selectedTerm
-          await supabase.from('reading_assessment').update(u).eq('id',r.id)
+        for (const g of grades) {
+          const existing = readingRows.find(r => r.assessment_type===selectedAssessment && r.grade_level===g && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)
+          if (existing) {
+            const u: any = { assessment_type: selectedAssessment }
+            fields.forEach(f => { u[f]=existing[f] })
+            u.reading_period = selectedReadingPeriod
+            u.term = selectedTerm
+            await supabase.from('reading_assessment').update(u).eq('id',existing.id)
+          } else {
+            const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
+            fields.forEach(f => { row[f]=0 })
+            await supabase.from('reading_assessment').insert(row)
+          }
         }
       }
     }
