@@ -51,6 +51,8 @@ interface Props {
 const NEGATIVE_KPIS = new Set(['Dropout/School Leaver Rate', 'Repetition Rate'])
 
 const GRADE_ORDER = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
+const TERMS = ['Term 1','Term 2','Term 3']
+const READING_PERIODS = ['BoSy','MoSY','EoSY']
 
 const PROFILE_COLORS: Record<string, string> = {
   'Male': '#3B82F6',
@@ -96,24 +98,29 @@ export default function DashboardClient({
   const lastProg = programsMonthly[programsMonthly.length - 1] || { implemented: 0, ongoing: 0, completed: 0 }
   const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 
-  // Reading assessment summary for dashboard
-  const crlaTotal = reading.filter(r => r.assessment_type === 'CRLA')
+  // Reading assessment summary for dashboard (filtered by selected reading period)
+  const filteredReading = reading.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)
+  const filteredPhiliri = philiri.filter(r => (r.reading_period || 'BoSy') === selectedReadingPeriod)
+
+  const crlaTotal = filteredReading.filter(r => r.assessment_type === 'CRLA')
     .reduce((s, r) => s + Number(r.low_emerging||0) + Number(r.high_emerging||0) + Number(r.developing||0) + Number(r.transition||0) + Number(r.grade_level_reader||0), 0)
-  const crlaGradeLevel = reading.filter(r => r.assessment_type === 'CRLA')
+  const crlaGradeLevel = filteredReading.filter(r => r.assessment_type === 'CRLA')
     .reduce((s, r) => s + Number(r.grade_level_reader||0), 0)
   const crlaRate = crlaTotal > 0 ? Math.round((crlaGradeLevel / crlaTotal) * 100) : 0
 
-  const philiriTotal = philiri.reduce((s, r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
-  const philiriReady = philiri.reduce((s, r) => s + Number(r.grade_ready||0), 0)
+  const philiriTotal = filteredPhiliri.reduce((s, r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
+  const philiriReady = filteredPhiliri.reduce((s, r) => s + Number(r.grade_ready||0), 0)
   const philiriRate = philiriTotal > 0 ? Math.round((philiriReady / philiriTotal) * 100) : 0
 
-  const rmaTotal = reading.filter(r => r.assessment_type === 'RMA')
+  const rmaTotal = filteredReading.filter(r => r.assessment_type === 'RMA')
     .reduce((s, r) => s + Number(r.not_proficient||0) + Number(r.low_proficient||0) + Number(r.nearly_proficient||0) + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
-  const rmaProficient = reading.filter(r => r.assessment_type === 'RMA')
+  const rmaProficient = filteredReading.filter(r => r.assessment_type === 'RMA')
     .reduce((s, r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
   const rmaRate = rmaTotal > 0 ? Math.round((rmaProficient / rmaTotal) * 100) : 0
 
   const [dateLabel, setDateLabel] = useState('')
+  const [selectedTerm, setSelectedTerm] = useState('Term 1')
+  const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
   useEffect(() => {
     setDateLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
   }, [])
@@ -123,8 +130,9 @@ export default function DashboardClient({
     total: r.male + r.female,
   }))
 
-  // MPS per grade (averaged across all subjects)
-  const mpsByGrade = getMpsByGrade(performance)
+  // MPS per grade (averaged across all subjects, filtered by selected term)
+  const filteredPerformance = performance.filter(p => (p.term || 'Term 1') === selectedTerm)
+  const mpsByGrade = getMpsByGrade(filteredPerformance)
   const overallMps = mpsByGrade.length
     ? (mpsByGrade.reduce((s, g) => s + g.mps, 0) / mpsByGrade.length).toFixed(1)
     : '0'
@@ -188,7 +196,30 @@ export default function DashboardClient({
       {/* Learning Assessment Summary — CRLA, Phil-IRI, RMA */}
       <div className="bg-white rounded-xl p-4 shadow-sm border">
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Assessment Summary</p>
-        <p className="text-xs text-gray-400 mb-4">Results are based on the latest available assessment</p>
+        <p className="text-xs text-gray-400 mb-3">Results are based on the latest available assessment</p>
+        
+        {/* Term and Reading Period Selectors */}
+        <div className="flex flex-wrap gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-gray-500">Term:</span>
+            {TERMS.map(t => (
+              <button key={t} onClick={() => setSelectedTerm(t)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-gray-500">Period:</span>
+            {READING_PERIODS.map(p => (
+              <button key={p} onClick={() => setSelectedReadingPeriod(p)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedReadingPeriod===p?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {p === 'BoSy' ? 'BoSy' : p === 'MoSY' ? 'MoSY' : 'EoSY'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'KS1 (Grades 1–3)', color: '#3B82F6', items: [
