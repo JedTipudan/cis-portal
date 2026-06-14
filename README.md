@@ -27,7 +27,7 @@ The main dashboard displays 19 summary cards and charts:
 | Learner Profile | Pie chart — Male, Female, SPED, IP, Others |
 | Key Indicators | 10 KPIs with color-coded status (Enrollment Rate, Promotion Rate, etc.) |
 | Learning Performance (MPS) | Mean Percentage Score per grade level with Term selector |
-| Learner Mastery Level | Pie chart — Mastered, Nearing, Low distribution |
+| Learner Mastery Level | Pie chart — per-subject MPS classification (Mastered ≥ 85, Nearing 75–84, Low < 75) with dynamic subject count |
 | Teaching & Non-Teaching Personnel | Staff counts by category |
 | Facilities & Resources | Classroom and infrastructure counts |
 | Programs & Interventions | Program list with status badges |

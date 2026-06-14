@@ -149,10 +149,10 @@ export default function DashboardClient({
         { name: `Female`, value: totalFemale, color: '#EC4899' },
       ]
 
-  // Derive mastery levels from actual MPS data filtered by term
-  const masteredCount = mpsByGrade.filter(g => g.mps >= 85).length
-  const nearingCount = mpsByGrade.filter(g => g.mps >= 75 && g.mps < 85).length
-  const lowCount = mpsByGrade.filter(g => g.mps < 75).length
+  // Derive mastery levels per subject (matching Performance page)
+  const masteredCount = filteredPerformance.filter(p => Number(p.mps) >= 85).length
+  const nearingCount = filteredPerformance.filter(p => Number(p.mps) >= 75 && Number(p.mps) < 85).length
+  const lowCount = filteredPerformance.filter(p => Number(p.mps) < 75).length
   const masteryData = [
     { name: 'Mastered', value: masteredCount },
     { name: 'Nearing', value: nearingCount },
@@ -356,7 +356,7 @@ export default function DashboardClient({
         {/* Learner Mastery */}
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learner Mastery Level</p>
-          <p className="text-xs text-gray-400 mb-2">All Learning Areas</p>
+          <p className="text-xs text-gray-400 mb-2">{masteredCount + nearingCount + lowCount} Subjects Across All Grades</p>
           <div className="flex flex-wrap gap-1.5 mb-2">
             {TERMS.map(t => (
               <button key={t} onClick={() => setSelectedTerm(t)}
