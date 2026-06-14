@@ -149,13 +149,14 @@ export default function DashboardClient({
         { name: `Female`, value: totalFemale, color: '#EC4899' },
       ]
 
-  const masteredCount = Math.round(totalEnrollment * 0.35)
-  const nearingCount = Math.round(totalEnrollment * 0.45)
-  const lowCount = totalEnrollment - masteredCount - nearingCount
+  // Derive mastery levels from actual MPS data filtered by term
+  const masteredCount = mpsByGrade.filter(g => g.mps >= 85).length
+  const nearingCount = mpsByGrade.filter(g => g.mps >= 75 && g.mps < 85).length
+  const lowCount = mpsByGrade.filter(g => g.mps < 75).length
   const masteryData = [
-    { name: 'Mastered 35%', value: masteredCount },
-    { name: 'Nearing 45%', value: nearingCount },
-    { name: 'Low 20%', value: lowCount },
+    { name: 'Mastered', value: masteredCount },
+    { name: 'Nearing', value: nearingCount },
+    { name: 'Low', value: lowCount },
   ]
   const masteryColors = ['#7C9A6E', '#3B82F6', '#EF4444']
 
