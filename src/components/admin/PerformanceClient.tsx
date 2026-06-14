@@ -310,7 +310,7 @@ export default function PerformanceClient({
 
       {/* Main Tabs */}
       <div className="flex flex-wrap gap-1 mb-5 bg-gray-100 p-1 rounded-lg w-fit">
-        {[{key:'kpi',label:'Key Performance Indicators'},{key:'academic',label:'Academic Performance'},{key:'reading',label:'Reading Assessment'}].map(t => (
+        {[{key:'kpi',label:'Key Performance Indicators'},{key:'academic',label:'Academic Performance'},{key:'reading',label:'Literacy and Numeracy'}].map(t => (
           <button key={t.key} onClick={() => setTab(t.key as any)}
             className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${tab===t.key?'bg-white shadow text-[#7C9A6E]':'text-gray-500 hover:text-gray-700'}`}>
             {t.label}
@@ -453,19 +453,9 @@ export default function PerformanceClient({
         </div>
       )}
 
-      {/* ── READING ASSESSMENT TAB ── */}
+      {/* ── LITERACY AND NUMERACY TAB ── */}
       {tab==='reading' && (
         <div className="space-y-4">
-          {/* Term Selector */}
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-semibold text-gray-500">Term:</span>
-            {TERMS.map(t => (
-              <button key={t} onClick={() => setSelectedTerm(t)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {t}
-              </button>
-            ))}
-          </div>
           {/* Reading Period Selector */}
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-xs font-semibold text-gray-500">Period:</span>

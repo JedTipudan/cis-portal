@@ -198,17 +198,8 @@ export default function DashboardClient({
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Assessment Summary</p>
         <p className="text-xs text-gray-400 mb-3">Results are based on the latest available assessment</p>
         
-        {/* Term and Reading Period Selectors */}
+        {/* Period Selector only */}
         <div className="flex flex-wrap gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold text-gray-500">Term:</span>
-            {TERMS.map(t => (
-              <button key={t} onClick={() => setSelectedTerm(t)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {t}
-              </button>
-            ))}
-          </div>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-gray-500">Period:</span>
             {READING_PERIODS.map(p => (
@@ -320,12 +311,20 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* MPS per Grade + Mastery */}
+      {/* Learning Performance (MPS) + Mastery Level */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* MPS per Grade Level */}
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learning Performance (MPS)</p>
-          <p className="text-xs text-gray-400 mb-3">Average MPS per Grade Level</p>
+          <p className="text-xs text-gray-400 mb-2">Average MPS per Grade Level</p>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {TERMS.map(t => (
+              <button key={t} onClick={() => setSelectedTerm(t)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
           <div className="space-y-2">
             {mpsByGrade.map(g => (
               <div key={g.grade} className="flex items-center gap-2">
@@ -357,6 +356,14 @@ export default function DashboardClient({
         <div className="bg-white rounded-xl p-4 shadow-sm border">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Learner Mastery Level</p>
           <p className="text-xs text-gray-400 mb-2">All Learning Areas</p>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {TERMS.map(t => (
+              <button key={t} onClick={() => setSelectedTerm(t)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t}
+              </button>
+            ))}
+          </div>
           <ResponsiveContainer width="100%" height={180}>
             <PieChart>
               <Pie data={masteryData} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value">
