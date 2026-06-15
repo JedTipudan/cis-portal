@@ -2,7 +2,9 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
-import { Pencil, Save, X } from 'lucide-react'
+import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+
+const MONTHS = ['June','July','August','September','October','November','December','January','February','March','April','May']
 
 export default function AttendanceClient({ attendance, isAdmin, schoolYear = '2024-2025' }: { attendance: any[]; isAdmin: boolean; schoolYear?: string }) {
   const [rows, setRows] = useState(attendance)
@@ -17,10 +19,29 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
   async function save() {
     setSaving(true)
     for (const r of rows) {
-      await supabase.from('attendance').update({ present: r.present, absent: r.absent }).eq('id', r.id)
+      if (r.isNew) {
+        await supabase.from('attendance').insert({ month: r.month, present: r.present, absent: r.absent, school_year: schoolYear })
+      } else {
+        await supabase.from('attendance').update({ present: r.present, absent: r.absent }).eq('id', r.id)
+      }
     }
     setSaving(false)
     setEditing(false)
+    window.location.reload()
+  }
+
+  async function deleteRow(id: string) {
+    await supabase.from('attendance').delete().eq('id', id)
+    setRows(rows.filter(r => r.id !== id))
+  }
+
+  const usedMonths = rows.map(r => r.month)
+  const availableMonths = MONTHS.filter(m => !usedMonths.includes(m))
+
+  function addMonth() {
+    const nextMonth = availableMonths[0]
+    if (!nextMonth) return
+    setRows([...rows, { id: Date.now().toString(), month: nextMonth, present: 0, absent: 0, school_year: schoolYear, isNew: true }])
   }
 
   return (
@@ -70,6 +91,7 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
                 <th className="px-4 py-2 text-center">Present</th>
                 <th className="px-4 py-2 text-center">Absent</th>
                 <th className="px-4 py-2 text-center">ADA %</th>
+                {editing && <th className="px-4 py-2 text-center">Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -92,11 +114,26 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
                       ) : r.absent}
                     </td>
                     <td className="px-4 py-2 text-center font-semibold text-[#7C9A6E]">{pct}%</td>
+                    {editing && (
+                      <td className="px-4 py-2 text-center">
+                        <button onClick={() => deleteRow(r.id)} className="text-red-500 hover:text-red-700">
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 )
               })}
             </tbody>
           </table>
+          {editing && availableMonths.length > 0 && (
+            <div className="p-3 border-t">
+              <button onClick={addMonth}
+                className="flex items-center gap-1 text-sm text-[#7C9A6E] hover:text-[#5a7a52]">
+                <Plus size={14} /> Add Month
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -67,23 +67,35 @@ export default function TransparencyClient({
 
   async function saveMooe() {
     setSaving(true)
-    for (const r of mooeRows) await supabase.from('mooe_monthly').update({ allocated: r.allocated, utilized: r.utilized }).eq('id', r.id)
+    for (const r of mooeRows) {
+      if (r.isNew) await supabase.from('mooe_monthly').insert({ month: r.month, allocated: r.allocated, utilized: r.utilized, school_year: null })
+      else await supabase.from('mooe_monthly').update({ allocated: r.allocated, utilized: r.utilized }).eq('id', r.id)
+    }
     setSaving(false); setEditing(false)
+    window.location.reload()
   }
 
   async function savePrograms() {
     setSaving(true)
-    for (const r of progRows) await supabase.from('programs_monthly').update({ implemented: r.implemented, ongoing: r.ongoing, completed: r.completed }).eq('id', r.id)
+    for (const r of progRows) {
+      if (r.isNew) await supabase.from('programs_monthly').insert({ month: r.month, implemented: r.implemented, ongoing: r.ongoing, completed: r.completed })
+      else await supabase.from('programs_monthly').update({ implemented: r.implemented, ongoing: r.ongoing, completed: r.completed }).eq('id', r.id)
+    }
     setSaving(false); setEditing(false)
+    window.location.reload()
   }
 
   async function saveFunds() {
     setSaving(true)
-    for (const r of fundRows) await supabase.from('other_funds').update({
-      igp_capitalization: r.igp_capitalization, igp_reinvestment: r.igp_reinvestment,
-      canteen_capitalization: r.canteen_capitalization, canteen_reinvestment: r.canteen_reinvestment
-    }).eq('id', r.id)
+    for (const r of fundRows) {
+      if (r.isNew) await supabase.from('other_funds').insert({ month: r.month, igp_capitalization: r.igp_capitalization, igp_reinvestment: r.igp_reinvestment, canteen_capitalization: r.canteen_capitalization, canteen_reinvestment: r.canteen_reinvestment })
+      else await supabase.from('other_funds').update({
+        igp_capitalization: r.igp_capitalization, igp_reinvestment: r.igp_reinvestment,
+        canteen_capitalization: r.canteen_capitalization, canteen_reinvestment: r.canteen_reinvestment
+      }).eq('id', r.id)
+    }
     setSaving(false); setEditing(false)
+    window.location.reload()
   }
 
   function handleSave() {
@@ -102,6 +114,44 @@ export default function TransparencyClient({
   async function deleteRow(id: string) {
     await supabase.from('transparency').delete().eq('id', id)
     setRows(rows.filter(r => r.id !== id))
+  }
+
+  async function deleteMooeRow(id: string) {
+    await supabase.from('mooe_monthly').delete().eq('id', id)
+    setMooeRows(mooeRows.filter(r => r.id !== id))
+  }
+
+  async function deleteProgRow(id: string) {
+    await supabase.from('programs_monthly').delete().eq('id', id)
+    setProgRows(progRows.filter(r => r.id !== id))
+  }
+
+  async function deleteFundRow(id: string) {
+    await supabase.from('other_funds').delete().eq('id', id)
+    setFundRows(fundRows.filter(r => r.id !== id))
+  }
+
+  const MONTHS = ['June','July','August','September','October','November','December','January','February','March','April','May']
+
+  function addMooeRow() {
+    const used = mooeRows.map(r => r.month)
+    const next = MONTHS.find(m => !used.includes(m))
+    if (!next) return
+    setMooeRows([...mooeRows, { id: Date.now().toString(), month: next, allocated: 0, utilized: 0, isNew: true }])
+  }
+
+  function addProgRow() {
+    const used = progRows.map(r => r.month)
+    const next = MONTHS.find(m => !used.includes(m))
+    if (!next) return
+    setProgRows([...progRows, { id: Date.now().toString(), month: next, implemented: 0, ongoing: 0, completed: 0, isNew: true }])
+  }
+
+  function addFundRow() {
+    const used = fundRows.map(r => r.month)
+    const next = MONTHS.find(m => !used.includes(m))
+    if (!next) return
+    setFundRows([...fundRows, { id: Date.now().toString(), month: next, igp_capitalization: 0, igp_reinvestment: 0, canteen_capitalization: 0, canteen_reinvestment: 0, isNew: true }])
   }
 
   const updateRow = (id: string, f: string, v: string) => setRows(rows.map(r => r.id === id ? { ...r, [f]: v } : r))
@@ -261,6 +311,7 @@ export default function TransparencyClient({
                   <th className="px-4 py-2 text-right">Allocated</th>
                   <th className="px-4 py-2 text-right">Utilized</th>
                   <th className="px-4 py-2 text-right">Balance</th>
+                  {editing && <th className="px-4 py-2 text-center">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -278,6 +329,7 @@ export default function TransparencyClient({
                           : <span className="text-[#3B82F6] font-semibold">{fmt(r.utilized)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
+                      {editing && <td className="px-2"><button onClick={() => deleteMooeRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
                     </tr>
                   )
                 })}
@@ -286,9 +338,17 @@ export default function TransparencyClient({
                   <td className="px-4 py-2 text-right text-[#7C9A6E]">{fmt(totalAllocated)}</td>
                   <td className="px-4 py-2 text-right text-[#3B82F6]">{fmt(totalUtilized)}</td>
                   <td className="px-4 py-2 text-right">{fmt(totalBalance)}</td>
+                  {editing && <td />}
                 </tr>
               </tbody>
             </table>
+            {editing && (
+              <div className="p-3 border-t">
+                <button onClick={addMooeRow} className="flex items-center gap-1 text-sm text-[#7C9A6E] hover:text-[#5a7a52]">
+                  <Plus size={14} /> Add Month
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -335,6 +395,7 @@ export default function TransparencyClient({
                   <th className="px-4 py-2 text-center">Implemented</th>
                   <th className="px-4 py-2 text-center">Ongoing</th>
                   <th className="px-4 py-2 text-center">Completed</th>
+                  {editing && <th className="px-4 py-2 text-center">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -347,10 +408,18 @@ export default function TransparencyClient({
                           : <span className="font-semibold">{r[f]}</span>}
                       </td>
                     ))}
+                    {editing && <td className="px-2"><button onClick={() => deleteProgRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
                   </tr>
                 ))}
               </tbody>
             </table>
+            {editing && (
+              <div className="p-3 border-t">
+                <button onClick={addProgRow} className="flex items-center gap-1 text-sm text-[#7C9A6E] hover:text-[#5a7a52]">
+                  <Plus size={14} /> Add Month
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -406,6 +475,7 @@ export default function TransparencyClient({
                   <th className="px-4 py-2 text-right text-gray-600">Capitalization</th>
                   <th className="px-4 py-2 text-right text-gray-600">Reinvestment</th>
                   <th className="px-4 py-2 text-right text-gray-600">Balance</th>
+                  {editing && <th className="px-4 py-2 text-center text-gray-600">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -423,6 +493,7 @@ export default function TransparencyClient({
                           : <span className="text-[#3B82F6] font-semibold">{fmt(r.igp_reinvestment)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
+                      {editing && <td className="px-2"><button onClick={() => deleteFundRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
                     </tr>
                   )
                 })}
@@ -431,6 +502,7 @@ export default function TransparencyClient({
                   <td className="px-4 py-2 text-right text-[#7C9A6E]">{fmt(igpCapTotal)}</td>
                   <td className="px-4 py-2 text-right text-[#3B82F6]">{fmt(igpReinvTotal)}</td>
                   <td className="px-4 py-2 text-right" style={{ color: igpBalTotal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(igpBalTotal)}</td>
+                  {editing && <td />}
                 </tr>
               </tbody>
             </table>
@@ -446,6 +518,7 @@ export default function TransparencyClient({
                   <th className="px-4 py-2 text-right text-gray-600">Capitalization</th>
                   <th className="px-4 py-2 text-right text-gray-600">Reinvestment</th>
                   <th className="px-4 py-2 text-right text-gray-600">Balance</th>
+                  {editing && <th className="px-4 py-2 text-center text-gray-600">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -456,13 +529,14 @@ export default function TransparencyClient({
                       <td className="px-4 py-2 font-medium">{r.month}</td>
                       <td className="px-4 py-2 text-right">
                         {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.canteen_capitalization} onChange={e => updateFund(r.id, 'canteen_capitalization', e.target.value)} />
-                          : <span className="text-[#3B82F6] font-semibold">{fmt(r.canteen_capitalization)}</span>}
+                          : <span className="text-[#7C9A6E] font-semibold">{fmt(r.canteen_capitalization)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right">
                         {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.canteen_reinvestment} onChange={e => updateFund(r.id, 'canteen_reinvestment', e.target.value)} />
                           : <span className="text-[#8B5CF6] font-semibold">{fmt(r.canteen_reinvestment)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
+                      {editing && <td className="px-2"><button onClick={() => deleteFundRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
                     </tr>
                   )
                 })}
@@ -471,9 +545,17 @@ export default function TransparencyClient({
                   <td className="px-4 py-2 text-right text-[#3B82F6]">{fmt(canCapTotal)}</td>
                   <td className="px-4 py-2 text-right text-[#8B5CF6]">{fmt(canReinvTotal)}</td>
                   <td className="px-4 py-2 text-right" style={{ color: canBalTotal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(canBalTotal)}</td>
+                  {editing && <td />}
                 </tr>
               </tbody>
             </table>
+            {editing && (
+              <div className="p-3 border-t">
+                <button onClick={addFundRow} className="flex items-center gap-1 text-sm text-[#7C9A6E] hover:text-[#5a7a52]">
+                  <Plus size={14} /> Add Month
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

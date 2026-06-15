@@ -36,10 +36,15 @@ export default function EnrollmentClient({
   async function saveEnrollment() {
     setSaving(true)
     for (const r of rows) {
-      await supabase.from('enrollment').update({ male: r.male, female: r.female }).eq('id', r.id)
+      if (r.isNew) {
+        await supabase.from('enrollment').insert({ grade_level: r.grade_level, male: r.male, female: r.female, school_year: schoolYear })
+      } else {
+        await supabase.from('enrollment').update({ male: r.male, female: r.female }).eq('id', r.id)
+      }
     }
     setSaving(false)
     setEditing(false)
+    window.location.reload()
   }
 
   async function saveProfile() {
@@ -59,6 +64,11 @@ export default function EnrollmentClient({
   async function deleteProfile(id: string) {
     await supabase.from('learner_profile').delete().eq('id', id)
     setProfileRows(profileRows.filter(r => r.id !== id))
+  }
+
+  async function deleteEnrollment(id: string) {
+    await supabase.from('enrollment').delete().eq('id', id)
+    setRows(rows.filter(r => r.id !== id))
   }
 
   function cancel() {
@@ -137,6 +147,7 @@ export default function EnrollmentClient({
                   <th className="px-4 py-2 text-center">Male</th>
                   <th className="px-4 py-2 text-center">Female</th>
                   <th className="px-4 py-2 text-center">Total</th>
+                  {editing && <th className="px-4 py-2 text-center">Action</th>}
                 </tr>
               </thead>
               <tbody>
@@ -156,6 +167,13 @@ export default function EnrollmentClient({
                       ) : r.female}
                     </td>
                     <td className="px-4 py-2 text-center font-semibold">{r.male + r.female}</td>
+                    {editing && (
+                      <td className="px-4 py-2 text-center">
+                        <button onClick={() => deleteEnrollment(r.id)} className="text-red-500 hover:text-red-700">
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
                 <tr className="bg-[#F5C842]/20 font-bold">
@@ -163,9 +181,24 @@ export default function EnrollmentClient({
                   <td className="px-4 py-2 text-center">{totalM}</td>
                   <td className="px-4 py-2 text-center">{totalF}</td>
                   <td className="px-4 py-2 text-center">{total}</td>
+                  {editing && <td />}
                 </tr>
               </tbody>
             </table>
+            {editing && (
+              <div className="p-3 border-t">
+                <button
+                  onClick={() => {
+                    const usedGrades = rows.map(r => r.grade_level)
+                    const allGrades = ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
+                    const next = allGrades.find(g => !usedGrades.includes(g))
+                    if (next) setRows([...rows, { id: Date.now().toString(), grade_level: next, male: 0, female: 0, school_year: schoolYear, isNew: true }])
+                  }}
+                  className="flex items-center gap-1 text-sm text-[#7C9A6E] hover:text-[#5a7a52]">
+                  <Plus size={14} /> Add Grade Level
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

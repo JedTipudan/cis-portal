@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
-import { Pencil, Save, X } from 'lucide-react'
+import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
 
 const GRADE_LEVELS = ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
 
@@ -19,10 +19,11 @@ function sum(rows: any[], fields: string[]) {
 }
 
 function NutritionTable({
-  rows, fields, labels, colors, editing, onChange
+  rows, fields, labels, colors, editing, onChange, onDelete, onAdd, availableGrades
 }: {
   rows: any[]; fields: string[]; labels: string[]; colors: string[]
   editing: boolean; onChange: (id: string, field: string, val: string) => void
+  onDelete?: (id: string) => void; onAdd?: (grade: string) => void; availableGrades?: string[]
 }) {
   const totals = sum(rows, fields)
   const grand = totals.reduce((s, v) => s + v, 0)
@@ -42,6 +43,7 @@ function NutritionTable({
               </th>
             ))}
             <th className="px-3 py-2 text-center font-bold">Total</th>
+            {editing && <th className="px-3 py-2 text-center">Action</th>}
           </tr>
         </thead>
         <tbody>
@@ -63,6 +65,11 @@ function NutritionTable({
                   </td>
                 ))}
                 <td className="px-3 py-2 text-center font-bold">{rowTotal}</td>
+                {editing && (
+                  <td className="px-3 py-2 text-center">
+                    {onDelete && <button onClick={() => onDelete(r.id)} className="text-red-500 hover:text-red-700"><Trash2 size={12} /></button>}
+                  </td>
+                )}
               </tr>
             )
           })}
@@ -72,9 +79,18 @@ function NutritionTable({
               <td key={i} className="px-3 py-2 text-center" style={{ color: colors[i] }}>{t}</td>
             ))}
             <td className="px-3 py-2 text-center">{grand}</td>
+            {editing && <td />}
           </tr>
         </tbody>
       </table>
+      {editing && onAdd && availableGrades && availableGrades.length > 0 && (
+        <div className="p-3 border-t">
+          <button onClick={() => onAdd(availableGrades[0])}
+            className="flex items-center gap-1 text-xs text-[#7C9A6E] hover:text-[#5a7a52]">
+            <Plus size={12} /> Add Grade Level
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -127,10 +143,31 @@ export default function NutritionalClient({
     for (const r of rows) {
       const update: any = {}
       fields.forEach(f => { update[f] = Number(r[f] || 0) })
-      await supabase.from('nutritional_status').update(update).eq('id', r.id)
+      if (r.isNew) {
+        await supabase.from('nutritional_status').insert({ ...update, grade_level: r.grade_level, school_year: schoolYear })
+      } else {
+        await supabase.from('nutritional_status').update(update).eq('id', r.id)
+      }
     }
     setSaving(false)
     setEditing(false)
+    window.location.reload()
+  }
+
+  async function deleteRow(id: string) {
+    await supabase.from('nutritional_status').delete().eq('id', id)
+    setRows(rows.filter(r => r.id !== id))
+  }
+
+  const GRADE_LEVELS = ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
+  const usedGrades = rows.map(r => r.grade_level)
+  const availableGrades = GRADE_LEVELS.filter(g => !usedGrades.includes(g))
+
+  function addGrade(grade: string) {
+    const newRow: any = { id: Date.now().toString(), grade_level: grade, school_year: schoolYear, isNew: true }
+    BMI_FIELDS.forEach(f => { newRow[f] = 0 })
+    HFA_FIELDS.forEach(f => { newRow[f] = 0 })
+    setRows([...rows, newRow])
   }
 
   // Summary totals for stat cards
@@ -204,14 +241,14 @@ export default function NutritionalClient({
 
       {tab === 'bmi' && (
         <div className="space-y-4">
-          <NutritionTable rows={rows} fields={BMI_FIELDS} labels={BMI_LABELS} colors={BMI_COLORS} editing={editing} onChange={onChange} />
+          <NutritionTable rows={rows} fields={BMI_FIELDS} labels={BMI_LABELS} colors={BMI_COLORS} editing={editing} onChange={onChange} onDelete={deleteRow} onAdd={addGrade} availableGrades={availableGrades} />
           <NutritionChart rows={rows} fields={BMI_FIELDS} labels={BMI_LABELS} colors={BMI_COLORS} title="BMI Distribution by Grade Level" />
         </div>
       )}
 
       {tab === 'hfa' && (
         <div className="space-y-4">
-          <NutritionTable rows={rows} fields={HFA_FIELDS} labels={HFA_LABELS} colors={HFA_COLORS} editing={editing} onChange={onChange} />
+          <NutritionTable rows={rows} fields={HFA_FIELDS} labels={HFA_LABELS} colors={HFA_COLORS} editing={editing} onChange={onChange} onDelete={deleteRow} onAdd={addGrade} availableGrades={availableGrades} />
           <NutritionChart rows={rows} fields={HFA_FIELDS} labels={HFA_LABELS} colors={HFA_COLORS} title="HFA Distribution by Grade Level" />
         </div>
       )}

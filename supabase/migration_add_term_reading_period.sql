@@ -54,27 +54,13 @@ CREATE TABLE IF NOT EXISTS philiri_assessment (
 -- Add reading_period column to existing philiri_assessment table
 ALTER TABLE philiri_assessment ADD COLUMN IF NOT EXISTS reading_period TEXT DEFAULT 'BoSy';
 
--- Enable RLS for new tables (ignore errors if already enabled)
+-- Enable RLS for new tables
 ALTER TABLE reading_assessment ENABLE ROW LEVEL SECURITY;
 ALTER TABLE philiri_assessment ENABLE ROW LEVEL SECURITY;
 
--- Add policies (skip if already exist)
-DO $$ BEGIN
-  CREATE POLICY "Public read reading_assessment" ON reading_assessment FOR SELECT USING (true);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+-- Add policies
+CREATE POLICY "Public read reading_assessment" ON reading_assessment FOR SELECT USING (true);
+CREATE POLICY "Admin write reading_assessment" ON reading_assessment FOR ALL USING (auth.role() = 'authenticated');
 
-DO $$ BEGIN
-  CREATE POLICY "Admin write reading_assessment" ON reading_assessment FOR ALL USING (auth.role() = 'authenticated');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Public read philiri_assessment" ON philiri_assessment FOR SELECT USING (true);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
-
-DO $$ BEGIN
-  CREATE POLICY "Admin write philiri_assessment" ON philiri_assessment FOR ALL USING (auth.role() = 'authenticated');
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+CREATE POLICY "Public read philiri_assessment" ON philiri_assessment FOR SELECT USING (true);
+CREATE POLICY "Admin write philiri_assessment" ON philiri_assessment FOR ALL USING (auth.role() = 'authenticated');
