@@ -265,6 +265,16 @@ export default function PerformanceClient({
     setEditing(true)
   }
 
+  async function initKpi() {
+    setSaving(true)
+    const indicators = Object.keys(KPI_META)
+    const toInsert = indicators.map(indicator => ({ indicator, value: 0, school_year: schoolYear }))
+    const { data } = await supabase.from('kpi').insert(toInsert).select()
+    if (data) setKpiRows([...kpiRows, ...data])
+    setSaving(false)
+    setEditing(true)
+  }
+
   async function initPerformance() {
     setSaving(true)
     const subjects = [...new Set(perfRows.map(r => r.subject))]
@@ -321,6 +331,15 @@ export default function PerformanceClient({
       {/* ── KPI TAB ── */}
       {tab==='kpi' && (
         <div className="space-y-5">
+          {isAdmin && kpiRows.length === 0 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+              <p className="text-sm text-yellow-700">No KPI data for <strong>{schoolYear}</strong>. Create rows to start entering data.</p>
+              <button onClick={initKpi} disabled={saving}
+                className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
+                {saving ? 'Creating...' : 'Create Data'}
+              </button>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {kpiRows.map(r => {
               const meta = KPI_META[r.indicator] ?? {icon:TrendingUp,desc:'',color:'#6B7280'}
