@@ -297,6 +297,11 @@ CREATE POLICY "Admin write facilities" ON facilities FOR ALL USING (auth.role() 
 CREATE POLICY "Admin write programs" ON programs FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write stakeholders" ON stakeholders FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write documents" ON documents FOR ALL USING (auth.role() = 'authenticated');
+
+-- Storage bucket for document uploads
+INSERT INTO storage.buckets (id, name, public) VALUES ('documents', 'documents', true);
+CREATE POLICY "Allow authenticated uploads" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'documents');
+CREATE POLICY "Allow public read access" ON storage.objects FOR SELECT USING (bucket_id = 'documents');
 CREATE POLICY "Admin write transparency" ON transparency FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write achievements" ON achievements FOR ALL USING (auth.role() = 'authenticated');
 CREATE POLICY "Admin write priority_needs" ON priority_needs FOR ALL USING (auth.role() = 'authenticated');
