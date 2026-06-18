@@ -10,24 +10,55 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
   const [uploading, setUploading] = useState(false)
   const [title, setTitle] = useState('')
   const [category, setCategory] = useState('Report')
+  const [fileName, setFileName] = useState('')
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    setFileName(file ? file.name : '')
+    setMessage(null)
+  }
+
   async function upload() {
     const file = fileRef.current?.files?.[0]
-    if (!file || !title) return
+    if (!title.trim()) {
+      setMessage({ type: 'error', text: 'Please enter a document title.' })
+      return
+    }
+    if (!file) {
+      setMessage({ type: 'error', text: 'Please select a file to upload.' })
+      return
+    }
     setUploading(true)
-    const path = `documents/${Date.now()}_${file.name}`
-    const { data: storageData } = await supabase.storage.from('documents').upload(path, file)
-    if (storageData) {
-      const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path)
-      const { data: doc } = await supabase.from('documents').insert({
-        title, category, file_url: urlData.publicUrl
-      }).select().single()
-      if (doc) setDocs([doc, ...docs])
+    setMessage(null)
+    try {
+      const path = `documents/${Date.now()}_${file.name}`
+      const { data: storageData, error: storageError } = await supabase.storage.from('documents').upload(path, file)
+      if (storageError) {
+        setMessage({ type: 'error', text: `Upload failed: ${storageError.message}` })
+        setUploading(false)
+        return
+      }
+      if (storageData) {
+        const { data: urlData } = supabase.storage.from('documents').getPublicUrl(path)
+        const { data: doc, error: insertError } = await supabase.from('documents').insert({
+          title, category, file_url: urlData.publicUrl
+        }).select().single()
+        if (insertError) {
+          setMessage({ type: 'error', text: `Save failed: ${insertError.message}` })
+        } else if (doc) {
+          setDocs([doc, ...docs])
+          setMessage({ type: 'success', text: 'Document uploaded successfully.' })
+        }
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' })
     }
     setTitle('')
     setCategory('Report')
+    setFileName('')
     if (fileRef.current) fileRef.current.value = ''
     setUploading(false)
   }
@@ -36,6 +67,8 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
     await supabase.from('documents').delete().eq('id', id)
     setDocs(docs.filter(d => d.id !== id))
   }
+
+  const canUpload = !uploading && title.trim()
 
   return (
     <div>
@@ -49,9 +82,9 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
           <p className="text-sm font-semibold text-gray-700 mb-3">Upload Document</p>
           <div className="flex flex-wrap gap-3 items-end">
             <div>
-              <label className="text-xs text-gray-500 block mb-1">Title</label>
+              <label className="text-xs text-gray-500 block mb-1">Title <span className="text-red-500">*</span></label>
               <input className="border rounded-lg px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-[#7C9A6E]"
-                value={title} onChange={e => setTitle(e.target.value)} placeholder="Document title" />
+                value={title} onChange={e => { setTitle(e.target.value); setMessage(null) }} placeholder="Document title" />
             </div>
             <div>
               <label className="text-xs text-gray-500 block mb-1">Category</label>
@@ -61,14 +94,24 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">File</label>
-              <input ref={fileRef} type="file" className="text-sm" />
+              <label className="text-xs text-gray-500 block mb-1">File <span className="text-red-500">*</span></label>
+              <label className={`flex items-center gap-2 border rounded-lg px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 ${!canUpload ? 'opacity-50 pointer-events-none' : ''}`}>
+                <Upload size={14} className="text-gray-400" />
+                <span className="truncate max-w-[160px]">{fileName || 'Choose file...'}</span>
+                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.odt,.ods,.odp,.rtf"
+                  className="hidden" onChange={handleFileChange} />
+              </label>
             </div>
-            <button onClick={upload} disabled={uploading || !title}
-              className="flex items-center gap-2 bg-[#7C9A6E] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#5a7a52] disabled:opacity-50">
+            <button onClick={upload} disabled={!canUpload}
+              className="flex items-center gap-2 bg-[#7C9A6E] text-white px-4 py-1.5 rounded-lg text-sm hover:bg-[#5a7a52] disabled:opacity-50 disabled:cursor-not-allowed">
               <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload'}
             </button>
           </div>
+          {message && (
+            <p className={`mt-2 text-xs ${message.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+              {message.text}
+            </p>
+          )}
         </div>
       )}
 
