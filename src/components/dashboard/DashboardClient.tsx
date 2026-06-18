@@ -222,16 +222,16 @@ export default function DashboardClient({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'KS1 (Grades 1–3)', color: '#3B82F6', items: [
-              { name: 'CRLA', sub: 'Reading Level', rate: crlaRate, href: '/dashboard/performance?tab=reading&assessment=CRLA' },
-              { name: 'RMA', sub: 'Numeracy Level', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+              { name: 'CRLA', sub: 'Comprehensive Rapid Literacy Assessment', rate: crlaRate, href: '/dashboard/performance?tab=reading&assessment=CRLA' },
+              { name: 'RMA', sub: 'Rapid Math Assessment', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
             ]},
             { label: 'KS2 (Grades 4–6)', color: '#7C9A6E', items: [
-              { name: 'Phil-IRI', sub: 'Reading Level', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
-              { name: 'RMA', sub: 'Numeracy Level', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+              { name: 'Phil-IRI', sub: 'Philippine Informal Reading Inventory', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+              { name: 'RMA', sub: 'Rapid Math Assessment', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
             ]},
             { label: 'KS3 (Grades 7–10)', color: '#8B5CF6', items: [
-              { name: 'Phil-IRI', sub: 'Reading Level', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
-              { name: 'RMA', sub: 'Numeracy Level', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+              { name: 'Phil-IRI', sub: 'Philippine Informal Reading Inventory', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+              { name: 'RMA', sub: 'Rapid Math Assessment', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
             ]},
           ].map(group => (
             <div key={group.label} className="border rounded-xl p-4">

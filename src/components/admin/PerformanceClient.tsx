@@ -494,12 +494,16 @@ export default function PerformanceClient({
           </div>
           {/* Assessment selector */}
           <div className="flex flex-wrap gap-2">
-            {(['CRLA','Phil-IRI','RMA'] as const).map(a => (
-              <button key={a} onClick={() => setSelectedAssessment(a)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${selectedAssessment===a?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {a}
+            {([
+              { key: 'CRLA', label: 'CRLA', full: 'Comprehensive Rapid Literacy Assessment', grades: 'Gr.1–3' },
+              { key: 'Phil-IRI', label: 'Phil-IRI', full: 'Philippine Informal Reading Inventory', grades: 'Gr.4–10' },
+              { key: 'RMA', label: 'RMA', full: 'Rapid Math Assessment', grades: 'Gr.1–10' },
+            ]).map(a => (
+              <button key={a.key} onClick={() => setSelectedAssessment(a.key as any)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${selectedAssessment===a.key?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {a.label}
                 <span className="ml-1.5 text-xs font-normal opacity-70">
-                  {a==='CRLA'?'(Gr.1–3)':a==='Phil-IRI'?'(Gr.4–10)':'(Gr.1–10)'}
+                  ({a.grades})
                 </span>
               </button>
             ))}
@@ -526,7 +530,7 @@ export default function PerformanceClient({
           {selectedAssessment==='CRLA' && (
             <div className="space-y-3">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <strong>CRLA</strong> — Classroom Reading Level Assessment for Grades 1–3. Measures early reading fluency and comprehension.
+                <strong>CRLA</strong> — Comprehensive Rapid Literacy Assessment for Grades 1–3. Measures early reading fluency and comprehension.
               </div>
               <ReadingTable
                 data={readingRows.filter(r => r.assessment_type==='CRLA' && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
@@ -569,7 +573,7 @@ export default function PerformanceClient({
           {selectedAssessment==='RMA' && (
             <div className="space-y-3">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <strong>RMA</strong> — Reading Miscue Analysis for Grades 1–10. Qualitative analysis of reading errors to guide targeted intervention.
+                <strong>RMA</strong> — Rapid Math Assessment for Grades 1–10. Measures numeracy skills and mathematical proficiency.
               </div>
               <ReadingTable
                 data={readingRows.filter(r => r.assessment_type==='RMA' && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
