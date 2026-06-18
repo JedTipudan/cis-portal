@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { FileText, Upload, Trash2, Download } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const categories = ['Report', 'Form', 'Policy', 'Financial', 'Other']
 
@@ -12,6 +13,7 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
   const [category, setCategory] = useState('Report')
   const [fileName, setFileName] = useState('')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null; label: string }>({ show: false, id: null, label: '' })
   const fileRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
@@ -66,6 +68,10 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
   async function deleteDoc(id: string) {
     await supabase.from('documents').delete().eq('id', id)
     setDocs(docs.filter(d => d.id !== id))
+  }
+
+  function confirmDeleteDoc(id: string, title: string) {
+    setConfirmDelete({ show: true, id, label: title })
   }
 
   const canUpload = !uploading && title.trim()
@@ -152,7 +158,7 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
                         </a>
                       )}
                       {isAdmin && (
-                        <button onClick={() => deleteDoc(d.id)} className="text-red-500 hover:text-red-700">
+                        <button onClick={() => confirmDeleteDoc(d.id, d.title)} className="text-red-500 hover:text-red-700">
                           <Trash2 size={14} />
                         </button>
                       )}
@@ -164,6 +170,14 @@ export default function ReportsClient({ documents, isAdmin }: { documents: any[]
           </table>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title="Delete Document"
+        description={`Are you sure you want to delete "${confirmDelete.label}"? This action cannot be undone.`}
+        onConfirm={() => { if (confirmDelete.id) deleteDoc(confirmDelete.id) }}
+      />
     </div>
   )
 }

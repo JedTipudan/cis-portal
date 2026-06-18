@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const statusOptions = ['Ongoing', 'Completed', 'Planned', 'Suspended']
 
@@ -9,6 +10,7 @@ export default function ProgramsClient({ programs, isAdmin }: { programs: any[];
   const [rows, setRows] = useState(programs)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null }>({ show: false, id: null })
   const supabase = createClient()
 
   async function save() {
@@ -96,7 +98,7 @@ export default function ProgramsClient({ programs, isAdmin }: { programs: any[];
                 </td>
                 {editing && (
                   <td className="px-4 py-2 text-center">
-                    <button onClick={() => deleteRow(r.id)} className="text-red-500 hover:text-red-700">
+                    <button onClick={() => setConfirmDelete({ show: true, id: r.id })} className="text-red-500 hover:text-red-700">
                       <Trash2 size={14} />
                     </button>
                   </td>
@@ -116,6 +118,14 @@ export default function ProgramsClient({ programs, isAdmin }: { programs: any[];
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title="Delete Program"
+        description="Are you sure you want to delete this program? This action cannot be undone."
+        onConfirm={() => { if (confirmDelete.id) deleteRow(confirmDelete.id) }}
+      />
     </div>
   )
 }

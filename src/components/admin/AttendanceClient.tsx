@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const MONTHS = ['June','July','August','September','October','November','December','January','February','March','April','May']
 
@@ -10,6 +11,7 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
   const [rows, setRows] = useState(attendance)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null; label: string }>({ show: false, id: null, label: '' })
   const supabase = createClient()
 
   const last = rows[rows.length - 1] || { present: 0, absent: 0 }
@@ -116,7 +118,7 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
                     <td className="px-4 py-2 text-center font-semibold text-[#7C9A6E]">{pct}%</td>
                     {editing && (
                       <td className="px-4 py-2 text-center">
-                        <button onClick={() => deleteRow(r.id)} className="text-red-500 hover:text-red-700">
+                        <button onClick={() => setConfirmDelete({ show: true, id: r.id, label: r.month })} className="text-red-500 hover:text-red-700">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -136,6 +138,14 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title="Delete Attendance Record"
+        description={`Are you sure you want to delete the attendance record for "${confirmDelete.label}"? This action cannot be undone.`}
+        onConfirm={() => { if (confirmDelete.id) deleteRow(confirmDelete.id) }}
+      />
     </div>
   )
 }

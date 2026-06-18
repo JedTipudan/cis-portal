@@ -2,11 +2,13 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 export default function FacilitiesClient({ facilities, isAdmin }: { facilities: any[]; isAdmin: boolean }) {
   const [rows, setRows] = useState(facilities)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null }>({ show: false, id: null })
   const supabase = createClient()
 
   async function save() {
@@ -78,7 +80,7 @@ export default function FacilitiesClient({ facilities, isAdmin }: { facilities: 
                 </td>
                 {editing && (
                   <td className="px-4 py-2 text-center">
-                    <button onClick={() => deleteRow(r.id)} className="text-red-500 hover:text-red-700">
+                    <button onClick={() => setConfirmDelete({ show: true, id: r.id })} className="text-red-500 hover:text-red-700">
                       <Trash2 size={14} />
                     </button>
                   </td>
@@ -98,6 +100,14 @@ export default function FacilitiesClient({ facilities, isAdmin }: { facilities: 
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title="Delete Facility"
+        description="Are you sure you want to delete this facility record? This action cannot be undone."
+        onConfirm={() => { if (confirmDelete.id) deleteRow(confirmDelete.id) }}
+      />
     </div>
   )
 }

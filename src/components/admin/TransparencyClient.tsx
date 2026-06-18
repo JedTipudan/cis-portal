@@ -7,6 +7,7 @@ import {
   Legend, CartesianGrid, LineChart, Line
 } from 'recharts'
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const CATS = ['MOOE Utilization', 'Programs & Projects', 'Other Funds']
 
@@ -36,6 +37,7 @@ export default function TransparencyClient({
   const [progRows, setProgRows] = useState(programsMonthly)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null; type: string; label: string }>({ show: false, id: null, type: '', label: '' })
   const supabase = createClient()
 
   useEffect(() => {
@@ -252,7 +254,7 @@ export default function TransparencyClient({
                             {editing ? <input className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.value} onChange={e => updateRow(r.id, 'value', e.target.value)} />
                               : <span className="font-semibold">{r.value}</span>}
                           </td>
-                          {editing && <td className="px-2"><button onClick={() => deleteRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
+                          {editing && <td className="px-2"><button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'overview', label: r.label })} className="text-red-500"><Trash2 size={12} /></button></td>}
                         </tr>
                       ))
                     )}
@@ -329,7 +331,7 @@ export default function TransparencyClient({
                           : <span className="text-[#3B82F6] font-semibold">{fmt(r.utilized)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
-                      {editing && <td className="px-2"><button onClick={() => deleteMooeRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
+                      {editing && <td className="px-2"><button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'mooe', label: r.month })} className="text-red-500"><Trash2 size={12} /></button></td>}
                     </tr>
                   )
                 })}
@@ -408,7 +410,7 @@ export default function TransparencyClient({
                           : <span className="font-semibold">{r[f]}</span>}
                       </td>
                     ))}
-                    {editing && <td className="px-2"><button onClick={() => deleteProgRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
+                    {editing && <td className="px-2"><button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'programs', label: r.month })} className="text-red-500"><Trash2 size={12} /></button></td>}
                   </tr>
                 ))}
               </tbody>
@@ -493,7 +495,7 @@ export default function TransparencyClient({
                           : <span className="text-[#3B82F6] font-semibold">{fmt(r.igp_reinvestment)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
-                      {editing && <td className="px-2"><button onClick={() => deleteFundRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
+                      {editing && <td className="px-2"><button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'igp', label: r.month })} className="text-red-500"><Trash2 size={12} /></button></td>}
                     </tr>
                   )
                 })}
@@ -536,7 +538,7 @@ export default function TransparencyClient({
                           : <span className="text-[#8B5CF6] font-semibold">{fmt(r.canteen_reinvestment)}</span>}
                       </td>
                       <td className="px-4 py-2 text-right font-bold" style={{ color: bal >= 0 ? '#7C9A6E' : '#EF4444' }}>{fmt(bal)}</td>
-                      {editing && <td className="px-2"><button onClick={() => deleteFundRow(r.id)} className="text-red-500"><Trash2 size={12} /></button></td>}
+                      {editing && <td className="px-2"><button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'canteen', label: r.month })} className="text-red-500"><Trash2 size={12} /></button></td>}
                     </tr>
                   )
                 })}
@@ -559,6 +561,20 @@ export default function TransparencyClient({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title={`Delete ${confirmDelete.type === 'overview' ? 'Transparency Record' : confirmDelete.type === 'mooe' ? 'MOOE Record' : confirmDelete.type === 'programs' ? 'Programs Record' : 'Fund Record'}`}
+        description={`Are you sure you want to delete the record for "${confirmDelete.label}"? This action cannot be undone.`}
+        onConfirm={() => {
+          if (!confirmDelete.id) return
+          if (confirmDelete.type === 'overview') deleteRow(confirmDelete.id)
+          else if (confirmDelete.type === 'mooe') deleteMooeRow(confirmDelete.id)
+          else if (confirmDelete.type === 'programs') deleteProgRow(confirmDelete.id)
+          else deleteFundRow(confirmDelete.id)
+        }}
+      />
     </div>
   )
 }

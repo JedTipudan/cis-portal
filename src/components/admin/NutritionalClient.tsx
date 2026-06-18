@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts'
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const GRADE_LEVELS = ['Kinder','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
 
@@ -131,6 +132,7 @@ export default function NutritionalClient({
   const [tab, setTab] = useState<'bmi' | 'hfa'>('bmi')
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null; label: string }>({ show: false, id: null, label: '' })
   const supabase = createClient()
 
   function onChange(id: string, field: string, val: string) {
@@ -241,17 +243,25 @@ export default function NutritionalClient({
 
       {tab === 'bmi' && (
         <div className="space-y-4">
-          <NutritionTable rows={rows} fields={BMI_FIELDS} labels={BMI_LABELS} colors={BMI_COLORS} editing={editing} onChange={onChange} onDelete={deleteRow} onAdd={addGrade} availableGrades={availableGrades} />
+          <NutritionTable rows={rows} fields={BMI_FIELDS} labels={BMI_LABELS} colors={BMI_COLORS} editing={editing} onChange={onChange} onDelete={(id) => { const row = rows.find(r => r.id === id); if (row) setConfirmDelete({ show: true, id, label: row.grade_level }) }} onAdd={addGrade} availableGrades={availableGrades} />
           <NutritionChart rows={rows} fields={BMI_FIELDS} labels={BMI_LABELS} colors={BMI_COLORS} title="BMI Distribution by Grade Level" />
         </div>
       )}
 
       {tab === 'hfa' && (
         <div className="space-y-4">
-          <NutritionTable rows={rows} fields={HFA_FIELDS} labels={HFA_LABELS} colors={HFA_COLORS} editing={editing} onChange={onChange} onDelete={deleteRow} onAdd={addGrade} availableGrades={availableGrades} />
+          <NutritionTable rows={rows} fields={HFA_FIELDS} labels={HFA_LABELS} colors={HFA_COLORS} editing={editing} onChange={onChange} onDelete={(id) => { const row = rows.find(r => r.id === id); if (row) setConfirmDelete({ show: true, id, label: row.grade_level }) }} onAdd={addGrade} availableGrades={availableGrades} />
           <NutritionChart rows={rows} fields={HFA_FIELDS} labels={HFA_LABELS} colors={HFA_COLORS} title="HFA Distribution by Grade Level" />
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title="Delete Nutritional Record"
+        description={`Are you sure you want to delete the nutritional record for "${confirmDelete.label}"? This action cannot be undone.`}
+        onConfirm={() => { if (confirmDelete.id) deleteRow(confirmDelete.id) }}
+      />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts'
 import { Pencil, Save, X, Plus, Trash2 } from 'lucide-react'
+import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const PROFILE_COLORS: Record<string, string> = {
   'Male': '#3B82F6', 'Female': '#EC4899',
@@ -26,6 +27,7 @@ export default function EnrollmentClient({
   const [tab, setTab] = useState<'enrollment' | 'profile'>('enrollment')
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{ show: boolean; id: string | null; type: 'enrollment' | 'profile'; label: string }>({ show: false, id: null, type: 'enrollment', label: '' })
   const supabase = createClient()
 
   const total = rows.reduce((s, r) => s + r.male + r.female, 0)
@@ -169,7 +171,7 @@ export default function EnrollmentClient({
                     <td className="px-4 py-2 text-center font-semibold">{r.male + r.female}</td>
                     {editing && (
                       <td className="px-4 py-2 text-center">
-                        <button onClick={() => deleteEnrollment(r.id)} className="text-red-500 hover:text-red-700">
+                        <button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'enrollment', label: r.grade_level })} className="text-red-500 hover:text-red-700">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -258,7 +260,7 @@ export default function EnrollmentClient({
                     </td>
                     {editing && (
                       <td className="px-4 py-2 text-center">
-                        <button onClick={() => deleteProfile(r.id)} className="text-red-500 hover:text-red-700">
+                        <button onClick={() => setConfirmDelete({ show: true, id: r.id, type: 'profile', label: r.category })} className="text-red-500 hover:text-red-700">
                           <Trash2 size={14} />
                         </button>
                       </td>
@@ -285,6 +287,19 @@ export default function EnrollmentClient({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete.show}
+        onOpenChange={open => setConfirmDelete(prev => ({ ...prev, show: open }))}
+        title={confirmDelete.type === 'enrollment' ? 'Delete Enrollment' : 'Delete Learner Profile'}
+        description={`Are you sure you want to delete ${confirmDelete.type === 'enrollment' ? 'the enrollment record for' : 'the learner profile'} "${confirmDelete.label}"? This action cannot be undone.`}
+        onConfirm={() => {
+          if (confirmDelete.id) {
+            if (confirmDelete.type === 'enrollment') deleteEnrollment(confirmDelete.id)
+            else deleteProfile(confirmDelete.id)
+          }
+        }}
+      />
     </div>
   )
 }
