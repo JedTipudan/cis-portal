@@ -102,13 +102,13 @@ export default function DashboardClient({
   const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 
   const [dateLabel, setDateLabel] = useState('')
-  const [selectedTerm, setSelectedTerm] = useState(TERMS[0])
+  const [selectedTerm, setSelectedTerm] = useState(TERMS[0].value)
   const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
   useEffect(() => {
     setDateLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
   }, [])
   useEffect(() => {
-    setSelectedTerm(TERMS[0])
+    setSelectedTerm(TERMS[0].value)
   }, [schoolYear])
 
   // Reading assessment summary for dashboard (filtered by selected reading period)
@@ -327,9 +327,9 @@ export default function DashboardClient({
           <p className="text-xs text-gray-400 mb-2">Average MPS per Grade Level</p>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {TERMS.map(t => (
-              <button key={t} onClick={() => setSelectedTerm(t)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {t}
+              <button key={t.value} onClick={() => setSelectedTerm(t.value)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t.value?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t.label}
               </button>
             ))}
           </div>
@@ -366,9 +366,9 @@ export default function DashboardClient({
           <p className="text-xs text-gray-400 mb-2">{activePerformance.length} Subjects Across All Grades</p>
           <div className="flex flex-wrap gap-1.5 mb-2">
             {TERMS.map(t => (
-              <button key={t} onClick={() => setSelectedTerm(t)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {t}
+              <button key={t.value} onClick={() => setSelectedTerm(t.value)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors ${selectedTerm===t.value?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t.label}
               </button>
             ))}
           </div>

@@ -17,11 +17,20 @@ export function isTermBased(schoolYear: string): boolean {
   return startYear >= 2026
 }
 
-export function getTermsOrQuarters(schoolYear: string): string[] {
+export function getTermsOrQuarters(schoolYear: string): { label: string; value: string }[] {
   if (isTermBased(schoolYear)) {
-    return ['Term 1', 'Term 2', 'Term 3']
+    return [
+      { label: 'Term 1', value: 'Term 1' },
+      { label: 'Term 2', value: 'Term 2' },
+      { label: 'Term 3', value: 'Term 3' },
+    ]
   }
-  return ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4']
+  return [
+    { label: 'Quarter 1', value: 'Term 1' },
+    { label: 'Quarter 2', value: 'Term 2' },
+    { label: 'Quarter 3', value: 'Term 3' },
+    { label: 'Quarter 4', value: 'Term 4' },
+  ]
 }
 
 const KEY = 'cis_school_year'

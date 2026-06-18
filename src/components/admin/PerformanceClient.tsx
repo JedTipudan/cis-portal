@@ -7,7 +7,7 @@ import {
   Pencil, Save, X, TrendingUp, Users, UserCheck,
   GraduationCap, BookOpen, UserX, RefreshCw, UserMinus, ArrowRightLeft
 } from 'lucide-react'
-import { useSchoolYear, getTermsOrQuarters } from '@/lib/SchoolYearContext'
+import { useSchoolYear, getTermsOrQuarters, isTermBased } from '@/lib/SchoolYearContext'
 
 const GRADE_LEVELS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
 const PHILIRI_GRADES = ['Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
@@ -159,7 +159,7 @@ export default function PerformanceClient({
   const [selectedGrade, setSelectedGrade] = useState('Grade 1')
   const [selectedAssessment, setSelectedAssessment] = useState<'CRLA'|'Phil-IRI'|'RMA'>('CRLA')
   const [philiriSubcat, setPhiliriSubcat] = useState('overall')
-  const [selectedTerm, setSelectedTerm] = useState(TERMS[0])
+  const [selectedTerm, setSelectedTerm] = useState(TERMS[0].value)
   const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
 
   useEffect(() => {
@@ -169,7 +169,7 @@ export default function PerformanceClient({
     if (a === 'CRLA' || a === 'Phil-IRI' || a === 'RMA') setSelectedAssessment(a)
   }, [searchParams])
   useEffect(() => {
-    setSelectedTerm(TERMS[0])
+    setSelectedTerm(TERMS[0].value)
   }, [activeSchoolYear])
   const [kpiRows, setKpiRows] = useState(kpi)
   const [perfRows, setPerfRows] = useState(performance)
@@ -400,11 +400,11 @@ export default function PerformanceClient({
         <div className="space-y-4">
           {/* Term Selector */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-semibold text-gray-500">Term:</span>
+            <span className="text-xs font-semibold text-gray-500">{isTermBased(activeSchoolYear) ? 'Term:' : 'Quarter:'}</span>
             {TERMS.map(t => (
-              <button key={t} onClick={() => setSelectedTerm(t)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedTerm===t?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {t}
+              <button key={t.value} onClick={() => setSelectedTerm(t.value)}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedTerm===t.value?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {t.label}
               </button>
             ))}
           </div>
