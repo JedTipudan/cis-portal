@@ -12,6 +12,18 @@ function generateSchoolYears() {
 
 const SCHOOL_YEARS = generateSchoolYears()
 
+export function isTermBased(schoolYear: string): boolean {
+  const startYear = parseInt(schoolYear.split('-')[0])
+  return startYear >= 2026
+}
+
+export function getTermsOrQuarters(schoolYear: string): string[] {
+  if (isTermBased(schoolYear)) {
+    return ['Term 1', 'Term 2', 'Term 3']
+  }
+  return ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4']
+}
+
 const KEY = 'cis_school_year'
 
 interface Ctx { schoolYear: string; setSchoolYear: (y: string) => void; schoolYears: string[] }

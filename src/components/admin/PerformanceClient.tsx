@@ -7,10 +7,10 @@ import {
   Pencil, Save, X, TrendingUp, Users, UserCheck,
   GraduationCap, BookOpen, UserX, RefreshCw, UserMinus, ArrowRightLeft
 } from 'lucide-react'
+import { useSchoolYear, getTermsOrQuarters } from '@/lib/SchoolYearContext'
 
 const GRADE_LEVELS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
 const PHILIRI_GRADES = ['Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
-const TERMS = ['Term 1','Term 2','Term 3']
 const READING_PERIODS = ['BoSy','MoSY','EoSY']
 
 // CRLA
@@ -151,11 +151,15 @@ export default function PerformanceClient({
   performance: any[]; kpi: any[]; reading: any[]; philiri: any[]; isAdmin: boolean; schoolYear?: string
 }) {
   const searchParams = useSearchParams()
+  const { schoolYear: ctxSchoolYear } = useSchoolYear()
+  const activeSchoolYear = schoolYear || ctxSchoolYear
+  const TERMS = getTermsOrQuarters(activeSchoolYear)
+  
   const [tab, setTab] = useState<'kpi'|'academic'|'reading'>('kpi')
   const [selectedGrade, setSelectedGrade] = useState('Grade 1')
   const [selectedAssessment, setSelectedAssessment] = useState<'CRLA'|'Phil-IRI'|'RMA'>('CRLA')
   const [philiriSubcat, setPhiliriSubcat] = useState('overall')
-  const [selectedTerm, setSelectedTerm] = useState('Term 1')
+  const [selectedTerm, setSelectedTerm] = useState(TERMS[0])
   const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
 
   useEffect(() => {
@@ -164,6 +168,9 @@ export default function PerformanceClient({
     if (t === 'kpi' || t === 'academic' || t === 'reading') setTab(t)
     if (a === 'CRLA' || a === 'Phil-IRI' || a === 'RMA') setSelectedAssessment(a)
   }, [searchParams])
+  useEffect(() => {
+    setSelectedTerm(TERMS[0])
+  }, [activeSchoolYear])
   const [kpiRows, setKpiRows] = useState(kpi)
   const [perfRows, setPerfRows] = useState(performance)
   const [readingRows, setReadingRows] = useState(reading)

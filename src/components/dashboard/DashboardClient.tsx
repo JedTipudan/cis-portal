@@ -5,6 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from 'recharts'
+import { useSchoolYear, getTermsOrQuarters } from '@/lib/SchoolYearContext'
 
 function GaugeChart({ value, color }: { value: number; color: string }) {
   const data = [{ value }, { value: 100 - value }]
@@ -51,7 +52,6 @@ interface Props {
 const NEGATIVE_KPIS = new Set(['Dropout/School Leaver Rate', 'Repetition Rate'])
 
 const GRADE_ORDER = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
-const TERMS = ['Term 1','Term 2','Term 3']
 const READING_PERIODS = ['BoSy','MoSY','EoSY']
 
 const PROFILE_COLORS: Record<string, string> = {
@@ -82,6 +82,9 @@ export default function DashboardClient({
   programs, transparency, achievements, needs, attendance, learnerProfile,
   otherFunds, mooeMonthly, programsMonthly, reading, philiri, nutritional, isAdmin
 }: Props) {
+  const { schoolYear } = useSchoolYear()
+  const TERMS = getTermsOrQuarters(schoolYear)
+  
   const totalEnrollment = enrollment.reduce((s, r) => s + r.male + r.female, 0)
   const totalMale = enrollment.reduce((s, r) => s + r.male, 0)
   const totalFemale = enrollment.reduce((s, r) => s + r.female, 0)
@@ -99,11 +102,14 @@ export default function DashboardClient({
   const fmt = (n: number) => '₱' + Number(n).toLocaleString('en-PH', { minimumFractionDigits: 2 })
 
   const [dateLabel, setDateLabel] = useState('')
-  const [selectedTerm, setSelectedTerm] = useState('Term 1')
+  const [selectedTerm, setSelectedTerm] = useState(TERMS[0])
   const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
   useEffect(() => {
     setDateLabel(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }))
   }, [])
+  useEffect(() => {
+    setSelectedTerm(TERMS[0])
+  }, [schoolYear])
 
   // Reading assessment summary for dashboard (filtered by selected reading period)
   const filteredReading = reading.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
