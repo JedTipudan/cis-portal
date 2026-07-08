@@ -154,6 +154,7 @@ export default function NutritionalClient({
     setSaving(false)
     setEditing(false)
     onSaved?.()
+  }
 
   async function deleteRow(id: string) {
     await supabase.from('nutritional_status').delete().eq('id', id)

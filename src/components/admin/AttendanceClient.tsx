@@ -30,6 +30,7 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
     setSaving(false)
     setEditing(false)
     onSaved?.()
+  }
 
   async function deleteRow(id: string) {
     await supabase.from('attendance').delete().eq('id', id)

@@ -17,6 +17,7 @@ const READING_PERIODS = ['BoSy','MoSY','EoSY']
 const CRLA_GRADES = ['Grade 1','Grade 2','Grade 3']
 const CRLA_LEVELS = ['Low Emerging Reader','High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level']
 const CRLA_FIELDS = ['low_emerging','high_emerging','developing','transition','grade_level_reader']
+const CRLA_LANG_FIELDS = ['low_emerging_sb','low_emerging_fil','low_emerging_eng']
 const CRLA_COLORS: Record<string,string> = {
   'Low Emerging Reader':'#EF4444','High Emerging Reader':'#F97316',
   'Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',
@@ -307,12 +308,14 @@ export default function PerformanceClient({
           if (existing) {
             const u: any = { assessment_type: selectedAssessment }
             fields.forEach(f => { u[f]=existing[f] })
+            if (selectedAssessment==='CRLA') CRLA_LANG_FIELDS.forEach(f => { u[f]=existing[f]??0 })
             u.reading_period = selectedReadingPeriod
             u.term = selectedTerm
             await supabase.from('reading_assessment').update(u).eq('id',existing.id)
           } else {
             const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
             fields.forEach(f => { row[f]=0 })
+            if (selectedAssessment==='CRLA') CRLA_LANG_FIELDS.forEach(f => { row[f]=0 })
             await supabase.from('reading_assessment').insert(row)
           }
         }
@@ -349,6 +352,7 @@ export default function PerformanceClient({
       const toInsert = grades.map(g => {
         const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
         fields.forEach(f => { row[f] = 0 })
+        if (selectedAssessment==='CRLA') CRLA_LANG_FIELDS.forEach(f => { row[f] = 0 })
         return row
       })
       const { data } = await supabase.from('reading_assessment').insert(toInsert).select()
