@@ -567,15 +567,7 @@ export default function PerformanceClient({
               </div>
               <ReadingTable
                 data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)}
-                fields={['low_emerging','high_emerging','developing','transition','grade_level_reader']}
-                levels={[
-                  crlaGrade==='All' ? 'Low Emerging Reader' : CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label,
-                  'High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level'
-                ]}
-                colors={{
-                  [crlaGrade==='All' ? 'Low Emerging Reader' : CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label]: '#EF4444',
-                  'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E'
-                }}
+                fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
                 editing={editing} onUpdate={updateReading}
                 grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
               />
