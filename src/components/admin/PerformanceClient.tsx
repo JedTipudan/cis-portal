@@ -71,11 +71,26 @@ function kpiStatus(indicator: string, value: number) {
   return {label:'Needs Attention',cls:'bg-red-100 text-red-700'}
 }
 
-function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades }: {
+function mergeByGrade(data: any[], grades: string[], fields: string[]) {
+  return grades.map(g => {
+    const rows = data.filter(r => r.grade_level === g)
+    if (rows.length === 0) return null
+    if (rows.length === 1) return rows[0]
+    // merge multiple language rows by summing numeric fields
+    const merged: any = { ...rows[0] }
+    fields.forEach(f => { merged[f] = rows.reduce((s, r) => s + Number(r[f] || 0), 0) })
+    return merged
+  }).filter(Boolean)
+}
+
+function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades, mergeGrades }: {
   data: any[]; fields: string[]; levels: string[]; colors: Record<string,string>;
-  editing: boolean; onUpdate: (id:string,f:string,v:string)=>void; grades: string[]
+  editing: boolean; onUpdate: (id:string,f:string,v:string)=>void; grades: string[];
+  mergeGrades?: boolean
 }) {
-  const sorted = grades.map(g => data.find(r => r.grade_level === g)).filter(Boolean)
+  const sorted = mergeGrades
+    ? mergeByGrade(data, grades, fields)
+    : grades.map(g => data.find(r => r.grade_level === g)).filter(Boolean)
   const totals = fields.map(f => sorted.reduce((s,r) => s + Number(r[f]||0), 0))
   const grandTotal = totals.reduce((s,v) => s+v, 0)
 
@@ -604,6 +619,7 @@ export default function PerformanceClient({
                 fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
                 editing={editing} onUpdate={updateReading}
                 grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
+                mergeGrades={crlaGrade==='All'}
               />
             </div>
           )}
