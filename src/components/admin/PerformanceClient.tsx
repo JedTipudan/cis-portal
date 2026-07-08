@@ -166,8 +166,8 @@ export default function PerformanceClient({
   const [philiriSubcat, setPhiliriSubcat] = useState('overall')
   const [selectedTerm, setSelectedTerm] = useState(TERMS[0].value)
   const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
-  const [crlaGrade, setCrlaGrade] = useState('Grade 1')
-  const [crlaLang, setCrlaLang] = useState(CRLA_LANG_FIELDS['Grade 1'][0].field)
+  const [crlaGrade, setCrlaGrade] = useState('All')
+  const [crlaLang, setCrlaLang] = useState('all')
 
   useEffect(() => {
     const t = searchParams.get('tab')
@@ -542,35 +542,42 @@ export default function PerformanceClient({
                 <strong>CRLA</strong> — Comprehensive Rapid Literacy Assessment for Grades 1–3. Measures early reading fluency and comprehension.
               </div>
               {/* Grade selector */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-500">Grade:</span>
-                <select
-                  value={crlaGrade}
-                  onChange={e => { setCrlaGrade(e.target.value); setCrlaLang(CRLA_LANG_FIELDS[e.target.value][0].field) }}
-                  className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
-                  {CRLA_GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                </select>
-              </div>
-              {/* Language sub-tabs for Low Emerging Reader */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-gray-500">Low Emerging Reader — Language:</span>
-                <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
-                  {CRLA_LANG_FIELDS[crlaGrade].map(l => (
-                    <button key={l.field} onClick={() => setCrlaLang(l.field)}
-                      className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                        crlaLang===l.field ? 'bg-white shadow text-[#EF4444]' : 'text-gray-500 hover:text-gray-700'
-                      }`}>
-                      {l.label}
-                    </button>
-                  ))}
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-gray-500">Grade:</span>
+                  <select
+                    value={crlaGrade}
+                    onChange={e => { setCrlaGrade(e.target.value); setCrlaLang(e.target.value==='All' ? 'all' : CRLA_LANG_FIELDS[e.target.value][0].field) }}
+                    className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
+                    <option value="All">All</option>
+                    {CRLA_GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
                 </div>
+                {crlaGrade !== 'All' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-gray-500">Language:</span>
+                    <select
+                      value={crlaLang}
+                      onChange={e => setCrlaLang(e.target.value)}
+                      className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
+                      {CRLA_LANG_FIELDS[crlaGrade].map(l => <option key={l.field} value={l.field}>{l.label}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='CRLA' && r.grade_level===crlaGrade && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)}
-                fields={[crlaLang, 'high_emerging','developing','transition','grade_level_reader']}
-                levels={[CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label,'High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level']}
-                colors={{'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',[CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label]:'#EF4444'}}
-                editing={editing} onUpdate={updateReading} grades={[crlaGrade]}
+                data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)}
+                fields={['low_emerging','high_emerging','developing','transition','grade_level_reader']}
+                levels={[
+                  crlaGrade==='All' ? 'Low Emerging Reader' : CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label,
+                  'High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level'
+                ]}
+                colors={{
+                  [crlaGrade==='All' ? 'Low Emerging Reader' : CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label]: '#EF4444',
+                  'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E'
+                }}
+                editing={editing} onUpdate={updateReading}
+                grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
               />
             </div>
           )}
