@@ -71,10 +71,9 @@ function kpiStatus(indicator: string, value: number) {
   return {label:'Needs Attention',cls:'bg-red-100 text-red-700'}
 }
 
-function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades, langFields }: {
+function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades }: {
   data: any[]; fields: string[]; levels: string[]; colors: Record<string,string>;
-  editing: boolean; onUpdate: (id:string,f:string,v:string)=>void; grades: string[];
-  langFields?: {field:string;label:string}[]
+  editing: boolean; onUpdate: (id:string,f:string,v:string)=>void; grades: string[]
 }) {
   const sorted = grades.map(g => data.find(r => r.grade_level === g)).filter(Boolean)
   const totals = fields.map(f => sorted.reduce((s,r) => s + Number(r[f]||0), 0))
@@ -101,15 +100,7 @@ function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades,
           <thead className="bg-[#7C9A6E] text-white">
             <tr>
               <th className="px-3 py-2 text-left whitespace-nowrap">Grade</th>
-              {fields.map((f,fi) => (
-                f === 'low_emerging' && langFields ? (
-                  langFields.map(l => (
-                    <th key={l.field} className="px-3 py-2 text-center text-xs whitespace-nowrap" style={{backgroundColor:'#EF4444'}}>{l.label}</th>
-                  ))
-                ) : (
-                  <th key={f} className="px-3 py-2 text-center text-xs whitespace-nowrap">{levels[fi]}</th>
-                )
-              ))}
+              {levels.map(l => <th key={l} className="px-3 py-2 text-center text-xs whitespace-nowrap">{l}</th>)}
               <th className="px-3 py-2 text-center font-bold">Total</th>
             </tr>
           </thead>
@@ -120,27 +111,14 @@ function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades,
                 <tr key={r.id} className={i%2===0?'bg-white':'bg-gray-50'}>
                   <td className="px-3 py-2 font-medium whitespace-nowrap">{r.grade_level}</td>
                   {fields.map((f,fi) => (
-                    f === 'low_emerging' && langFields ? (
-                      langFields.map(l => (
-                        <td key={l.field} className="px-3 py-2 text-center">
-                          {editing ? (
-                            <input type="number" className="w-14 border rounded px-1 text-center text-xs"
-                              value={r[l.field]||0} onChange={e => onUpdate(r.id, l.field, e.target.value)} />
-                          ) : (
-                            <span className="font-semibold" style={{color:'#EF4444'}}>{r[l.field]||0}</span>
-                          )}
-                        </td>
-                      ))
-                    ) : (
-                      <td key={f} className="px-3 py-2 text-center">
-                        {editing ? (
-                          <input type="number" className="w-14 border rounded px-1 text-center text-xs"
-                            value={r[f]||0} onChange={e => onUpdate(r.id, f, e.target.value)} />
-                        ) : (
-                          <span className="font-semibold" style={{color: colors[levels[fi]]}}>{r[f]||0}</span>
-                        )}
-                      </td>
-                    )
+                    <td key={f} className="px-3 py-2 text-center">
+                      {editing ? (
+                        <input type="number" className="w-14 border rounded px-1 text-center text-xs"
+                          value={r[f]||0} onChange={e => onUpdate(r.id, f, e.target.value)} />
+                      ) : (
+                        <span className="font-semibold" style={{color: colors[levels[fi]]}}>{r[f]||0}</span>
+                      )}
+                    </td>
                   ))}
                   <td className="px-3 py-2 text-center font-bold">{rowTotal}</td>
                 </tr>
@@ -589,10 +567,11 @@ export default function PerformanceClient({
               </div>
               <ReadingTable
                 data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)}
-                fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
+                fields={crlaGrade==='All' ? CRLA_FIELDS : [crlaLang,'high_emerging','developing','transition','grade_level_reader']}
+                levels={crlaGrade==='All' ? CRLA_LEVELS : [CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label,'High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level']}
+                colors={crlaGrade==='All' ? CRLA_COLORS : {'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',[CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label]:'#EF4444'}}
                 editing={editing} onUpdate={updateReading}
                 grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
-                langFields={crlaGrade==='All' ? undefined : CRLA_LANG_FIELDS[crlaGrade]}
               />
             </div>
           )}
