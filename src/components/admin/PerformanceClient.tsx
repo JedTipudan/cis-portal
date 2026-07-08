@@ -544,12 +544,11 @@ export default function PerformanceClient({
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
                 <strong>CRLA</strong> — Comprehensive Rapid Literacy Assessment for Grades 1–3. Measures early reading fluency and comprehension.
               </div>
-              {/* Grade selector */}
+              {/* Grade + Language selector */}
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-gray-500">Grade:</span>
-                  <select
-                    value={crlaGrade}
+                  <select value={crlaGrade}
                     onChange={e => { setCrlaGrade(e.target.value); setCrlaLang(e.target.value==='All' ? 'all' : CRLA_LANG_FIELDS[e.target.value][0].field) }}
                     className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
                     <option value="All">All</option>
@@ -559,15 +558,40 @@ export default function PerformanceClient({
                 {crlaGrade !== 'All' && (
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-gray-500">Language:</span>
-                    <select
-                      value={crlaLang}
-                      onChange={e => setCrlaLang(e.target.value)}
+                    <select value={crlaLang} onChange={e => setCrlaLang(e.target.value)}
                       className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
                       {CRLA_LANG_FIELDS[crlaGrade].map(l => <option key={l.field} value={l.field}>{l.label}</option>)}
                     </select>
                   </div>
                 )}
               </div>
+              {/* Per grade+language no-data banner */}
+              {(() => {
+                if (!isAdmin || crlaGrade === 'All') return null
+                const lang = crlaLang || 'default'
+                const hasData = readingRows.some(r =>
+                  r.assessment_type==='CRLA' && r.grade_level===crlaGrade &&
+                  r.reading_period===selectedReadingPeriod && r.term===selectedTerm && r.language===lang
+                )
+                if (hasData) return null
+                return (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+                    <p className="text-sm text-yellow-700">No data for <strong>{crlaGrade}</strong> — <strong>{CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===lang)?.label}</strong>. Create a row to start entering data.</p>
+                    <button onClick={async () => {
+                      setSaving(true)
+                      const row: any = { grade_level: crlaGrade, assessment_type: 'CRLA', reading_period: selectedReadingPeriod, term: selectedTerm, language: lang }
+                      CRLA_FIELDS.forEach(f => { row[f]=0 })
+                      const { data } = await supabase.from('reading_assessment').insert(row).select()
+                      if (data) setReadingRows([...readingRows, ...data])
+                      setSaving(false)
+                      setEditing(true)
+                    }} disabled={saving}
+                      className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
+                      {saving ? 'Creating...' : 'Create Data'}
+                    </button>
+                  </div>
+                )
+              })()}
               <ReadingTable
                 data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm && (crlaGrade==='All' || r.language===(crlaLang||'default')))}
                 fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
