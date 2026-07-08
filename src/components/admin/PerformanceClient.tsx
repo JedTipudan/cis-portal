@@ -22,6 +22,13 @@ const CRLA_COLORS: Record<string,string> = {
   'Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',
 }
 
+// CRLA Low Emerging Reader language breakdown per grade
+const CRLA_LOW_LANGS: Record<string, { field: string; label: string }[]> = {
+  'Grade 1': [{ field: 'low_emerging_sb',  label: 'Sinugbuanong Binisaya' }],
+  'Grade 2': [{ field: 'low_emerging_sb',  label: 'Sinugbuanong Binisaya' }, { field: 'low_emerging_fil', label: 'Filipino' }],
+  'Grade 3': [{ field: 'low_emerging_fil', label: 'Filipino' },              { field: 'low_emerging_eng', label: 'English' }],
+}
+
 // RMA
 const RMA_LEVELS = ['Emerging (Not Proficient)','Emerging (Low Proficient)','Developing (Nearly Proficient)','Transitioning (Proficient)','At Grade Level (Highly Proficient)']
 const RMA_FIELDS = ['not_proficient','low_proficient','nearly_proficient','proficient','highly_proficient']
@@ -64,6 +71,85 @@ function kpiStatus(indicator: string, value: number) {
   if (value >= 85) return {label:'Good',cls:'bg-blue-100 text-blue-700'}
   if (value >= 75) return {label:'Fair',cls:'bg-yellow-100 text-yellow-700'}
   return {label:'Needs Attention',cls:'bg-red-100 text-red-700'}
+}
+
+function CRLATable({ data, editing, onUpdate }: {
+  data: any[]; editing: boolean; onUpdate: (id:string,f:string,v:string)=>void
+}) {
+  const otherFields = ['high_emerging','developing','transition','grade_level_reader']
+  const otherLabels = ['High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level']
+  const otherColors: Record<string,string> = {
+    'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B',
+    'Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="overflow-x-auto rounded-xl border">
+        <table className="w-full text-xs">
+          <thead className="bg-[#7C9A6E] text-white">
+            <tr>
+              <th className="px-3 py-2 text-left">Grade</th>
+              <th className="px-3 py-2 text-center" style={{backgroundColor:'#EF4444'}} colSpan={2}>Low Emerging Reader</th>
+              {otherLabels.map((l,i) => (
+                <th key={l} className="px-3 py-2 text-center text-xs whitespace-nowrap">{l}</th>
+              ))}
+              <th className="px-3 py-2 text-center font-bold">Total</th>
+            </tr>
+            <tr className="bg-[#7C9A6E]/80 text-white text-[10px]">
+              <th className="px-3 py-1" />
+              {CRLA_GRADES.flatMap(g => CRLA_LOW_LANGS[g]).filter((v,i,a) => a.findIndex(x=>x.field===v.field)===i).map(lang => (
+                <th key={lang.field} className="px-3 py-1 text-center whitespace-nowrap" style={{backgroundColor:'#EF444488'}}>{lang.label}</th>
+              ))}
+              {otherLabels.map(l => <th key={l} className="px-3 py-1" />)}
+              <th className="px-3 py-1" />
+            </tr>
+          </thead>
+          <tbody>
+            {CRLA_GRADES.map((grade, gi) => {
+              const r = data.find(x => x.grade_level === grade)
+              if (!r) return null
+              const langs = CRLA_LOW_LANGS[grade]
+              const allLowFields = ['low_emerging_sb','low_emerging_fil','low_emerging_eng']
+              const lowTotal = langs.reduce((s,l) => s + Number(r[l.field]||0), 0)
+              const rowTotal = lowTotal + otherFields.reduce((s,f) => s + Number(r[f]||0), 0)
+              return (
+                <tr key={r.id} className={gi%2===0?'bg-white':'bg-gray-50'}>
+                  <td className="px-3 py-2 font-medium whitespace-nowrap">{grade}</td>
+                  {/* Low Emerging — show value only for langs this grade uses, blank for others */}
+                  {allLowFields.filter((f,i,a) => {
+                    const allUsed = CRLA_GRADES.flatMap(g => CRLA_LOW_LANGS[g]).map(l=>l.field)
+                    return [...new Set(allUsed)].includes(f)
+                  }).map(field => {
+                    const usedByGrade = langs.some(l => l.field === field)
+                    return (
+                      <td key={field} className="px-3 py-2 text-center">
+                        {usedByGrade ? (
+                          editing ? (
+                            <input type="number" className="w-14 border rounded px-1 text-center text-xs"
+                              value={r[field]||0} onChange={e => onUpdate(r.id, field, e.target.value)} />
+                          ) : <span className="font-semibold text-red-500">{r[field]||0}</span>
+                        ) : <span className="text-gray-300">—</span>}
+                      </td>
+                    )
+                  })}
+                  {otherFields.map((f,fi) => (
+                    <td key={f} className="px-3 py-2 text-center">
+                      {editing ? (
+                        <input type="number" className="w-14 border rounded px-1 text-center text-xs"
+                          value={r[f]||0} onChange={e => onUpdate(r.id, f, e.target.value)} />
+                      ) : <span className="font-semibold" style={{color:otherColors[otherLabels[fi]]}}>{r[f]||0}</span>}
+                    </td>
+                  ))}
+                  <td className="px-3 py-2 text-center font-bold">{rowTotal}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades }: {
@@ -532,10 +618,9 @@ export default function PerformanceClient({
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
                 <strong>CRLA</strong> — Comprehensive Rapid Literacy Assessment for Grades 1–3. Measures early reading fluency and comprehension.
               </div>
-              <ReadingTable
+              <CRLATable
                 data={readingRows.filter(r => r.assessment_type==='CRLA' && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
-                fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
-                editing={editing} onUpdate={updateReading} grades={CRLA_GRADES}
+                editing={editing} onUpdate={updateReading}
               />
             </div>
           )}
