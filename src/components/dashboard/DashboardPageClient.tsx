@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useSchoolYear } from '@/lib/SchoolYearContext'
 import DashboardClient from '@/components/dashboard/DashboardClient'
@@ -10,8 +10,7 @@ export default function DashboardPageClient({ profile, isAdmin }: { profile: any
   const [data, setData] = useState<any>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    const sy = schoolYear
+  const fetchData = useCallback((sy: string) => {
     Promise.all([
       supabase.from('enrollment').select('*').eq('school_year', sy).order('id'),
       supabase.from('performance').select('*').eq('school_year', sy).order('grade_level').order('subject'),
@@ -59,6 +58,16 @@ export default function DashboardPageClient({ profile, isAdmin }: { profile: any
       })
     })
   }, [schoolYear])
+
+  useEffect(() => {
+    fetchData(schoolYear)
+  }, [schoolYear])
+
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchData(schoolYear) }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [schoolYear, fetchData])
 
   if (!data) return <div className="flex items-center justify-center h-60 text-gray-400 text-sm">Loading...</div>
 

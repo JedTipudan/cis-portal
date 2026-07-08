@@ -593,7 +593,14 @@ export default function PerformanceClient({
                 )
               })()}
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm && (crlaGrade==='All' || r.language===(crlaLang||'default')))}
+                data={readingRows.filter(r => {
+                  if (r.assessment_type !== 'CRLA') return false
+                  if (r.reading_period !== selectedReadingPeriod) return false
+                  if (r.term !== selectedTerm) return false
+                  if (crlaGrade !== 'All' && r.grade_level !== crlaGrade) return false
+                  if (crlaGrade !== 'All' && r.language !== (crlaLang || 'default')) return false
+                  return true
+                })}
                 fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
                 editing={editing} onUpdate={updateReading}
                 grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
