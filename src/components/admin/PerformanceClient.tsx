@@ -224,18 +224,19 @@ export default function PerformanceClient({
         const grades = selectedAssessment==='CRLA' ? CRLA_GRADES : GRADE_LEVELS
         const fields = selectedAssessment==='CRLA' ? CRLA_FIELDS : RMA_FIELDS
         for (const g of grades) {
-          const existing = readingRows.find(r => r.assessment_type===selectedAssessment && r.grade_level===g && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)
+          const lang = selectedAssessment==='CRLA' && crlaGrade!=='All' ? (crlaLang||'default') : 'default'
+          const existing = readingRows.find(r => r.assessment_type===selectedAssessment && r.grade_level===g && r.reading_period===selectedReadingPeriod && r.term===selectedTerm && (selectedAssessment!=='CRLA' || r.language===lang))
           if (existing) {
             const u: any = { assessment_type: selectedAssessment }
             fields.forEach(f => { u[f]=existing[f] })
-            if (selectedAssessment==='CRLA') ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { u[f]=existing[f]??0 })
+            if (selectedAssessment==='CRLA') { u.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { u[f]=existing[f]??0 }) }
             u.reading_period = selectedReadingPeriod
             u.term = selectedTerm
             await supabase.from('reading_assessment').update(u).eq('id',existing.id)
           } else {
             const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
             fields.forEach(f => { row[f]=0 })
-            if (selectedAssessment==='CRLA') ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 })
+            if (selectedAssessment==='CRLA') { row.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 }) }
             await supabase.from('reading_assessment').insert(row)
           }
         }
@@ -269,9 +270,11 @@ export default function PerformanceClient({
     } else {
       const grades = selectedAssessment === 'CRLA' ? CRLA_GRADES : GRADE_LEVELS
       const fields = selectedAssessment === 'CRLA' ? CRLA_FIELDS : RMA_FIELDS
+      const lang = selectedAssessment==='CRLA' && crlaGrade!=='All' ? (crlaLang||'default') : 'default'
       const toInsert = grades.map(g => {
         const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
         fields.forEach(f => { row[f] = 0 })
+        if (selectedAssessment==='CRLA') { row.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 }) }
         return row
       })
       const { data } = await supabase.from('reading_assessment').insert(toInsert).select()
@@ -566,10 +569,8 @@ export default function PerformanceClient({
                 )}
               </div>
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)}
-                fields={crlaGrade==='All' ? CRLA_FIELDS : [crlaLang,'high_emerging','developing','transition','grade_level_reader']}
-                levels={crlaGrade==='All' ? CRLA_LEVELS : [CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label,'High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level']}
-                colors={crlaGrade==='All' ? CRLA_COLORS : {'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',[CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===crlaLang)!.label]:'#EF4444'}}
+                data={readingRows.filter(r => r.assessment_type==='CRLA' && (crlaGrade==='All' || r.grade_level===crlaGrade) && r.reading_period===selectedReadingPeriod && r.term===selectedTerm && (crlaGrade==='All' || r.language===(crlaLang||'default')))}
+                fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
                 editing={editing} onUpdate={updateReading}
                 grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
               />
