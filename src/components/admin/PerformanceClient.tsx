@@ -83,72 +83,65 @@ function CRLATable({ data, editing, onUpdate }: {
     'High Emerging Reader':'#F97316','Developing Reader':'#F59E0B',
     'Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',
   }
-
-  // All unique lang columns in order: sb, fil, eng
   const allLangCols = ['low_emerging_sb','low_emerging_fil','low_emerging_eng']
   const langColLabels: Record<string,string> = {
-    low_emerging_sb: 'Sinugbuanong Binisaya',
-    low_emerging_fil: 'Filipino',
-    low_emerging_eng: 'English',
+    low_emerging_sb:'Sinugbuanong Binisaya', low_emerging_fil:'Filipino', low_emerging_eng:'English',
   }
 
   return (
-    <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="w-full text-xs">
-          <thead className="bg-[#7C9A6E] text-white">
-            <tr>
-              <th className="px-3 py-2 text-left" rowSpan={2}>Grade</th>
-              <th className="px-3 py-2 text-center" style={{backgroundColor:'#EF4444'}} colSpan={allLangCols.length}>Low Emerging Reader</th>
-              {otherLabels.map(l => (
-                <th key={l} className="px-3 py-2 text-center text-xs whitespace-nowrap" rowSpan={2}>{l}</th>
-              ))}
-              <th className="px-3 py-2 text-center font-bold" rowSpan={2}>Total</th>
-            </tr>
-            <tr style={{backgroundColor:'#EF444499'}}>
-              {allLangCols.map(f => (
-                <th key={f} className="px-3 py-1 text-center whitespace-nowrap text-[10px]">{langColLabels[f]}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {CRLA_GRADES.map((grade, gi) => {
-              const r = data.find(x => x.grade_level === grade)
-              if (!r) return null
-              const langs = CRLA_LOW_LANGS[grade]
-              const lowTotal = langs.reduce((s,l) => s + Number(r[l.field]||0), 0)
-              const rowTotal = lowTotal + otherFields.reduce((s,f) => s + Number(r[f]||0), 0)
-              return (
-                <tr key={r.id} className={gi%2===0?'bg-white':'bg-gray-50'}>
-                  <td className="px-3 py-2 font-medium whitespace-nowrap">{grade}</td>
-                  {allLangCols.map(field => {
-                    const usedByGrade = langs.some(l => l.field === field)
-                    return (
-                      <td key={field} className="px-3 py-2 text-center">
-                        {usedByGrade ? (
-                          editing ? (
-                            <input type="number" className="w-14 border rounded px-1 text-center text-xs"
-                              value={r[field]||0} onChange={e => onUpdate(r.id, field, e.target.value)} />
-                          ) : <span className="font-semibold text-red-500">{r[field]||0}</span>
-                        ) : <span className="text-gray-300">—</span>}
-                      </td>
-                    )
-                  })}
-                  {otherFields.map((f,fi) => (
-                    <td key={f} className="px-3 py-2 text-center">
-                      {editing ? (
-                        <input type="number" className="w-14 border rounded px-1 text-center text-xs"
-                          value={r[f]||0} onChange={e => onUpdate(r.id, f, e.target.value)} />
-                      ) : <span className="font-semibold" style={{color:otherColors[otherLabels[fi]]}}>{r[f]||0}</span>}
+    <div className="overflow-x-auto rounded-xl border">
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="bg-[#7C9A6E] text-white">
+            <th className="px-3 py-2 text-left" rowSpan={2}>Grade</th>
+            <th className="px-3 py-2 text-center" colSpan={3} style={{backgroundColor:'#EF4444'}}>Low Emerging Reader</th>
+            <th className="px-3 py-2 text-center whitespace-nowrap" rowSpan={2} style={{backgroundColor:'#F97316'}}>High Emerging Reader</th>
+            <th className="px-3 py-2 text-center whitespace-nowrap" rowSpan={2} style={{backgroundColor:'#F59E0B'}}>Developing Reader</th>
+            <th className="px-3 py-2 text-center whitespace-nowrap" rowSpan={2} style={{backgroundColor:'#3B82F6'}}>Transition Reader</th>
+            <th className="px-3 py-2 text-center whitespace-nowrap" rowSpan={2} style={{backgroundColor:'#7C9A6E'}}>Reading at Grade Level</th>
+            <th className="px-3 py-2 text-center font-bold" rowSpan={2}>Total</th>
+          </tr>
+          <tr style={{backgroundColor:'#EF444488'}} className="text-white">
+            {allLangCols.map(f => (
+              <th key={f} className="px-3 py-1 text-center text-[10px] whitespace-nowrap">{langColLabels[f]}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {CRLA_GRADES.map((grade, gi) => {
+            const r = data.find(x => x.grade_level === grade)
+            if (!r) return null
+            const langs = CRLA_LOW_LANGS[grade]
+            const lowTotal = langs.reduce((s,l) => s + Number(r[l.field]||0), 0)
+            const rowTotal = lowTotal + otherFields.reduce((s,f) => s + Number(r[f]||0), 0)
+            return (
+              <tr key={r.id} className={gi%2===0?'bg-white':'bg-gray-50'}>
+                <td className="px-3 py-2 font-medium whitespace-nowrap">{grade}</td>
+                {allLangCols.map(field => {
+                  const used = langs.some(l => l.field === field)
+                  return (
+                    <td key={field} className="px-3 py-2 text-center">
+                      {used ? (
+                        editing
+                          ? <input type="number" className="w-14 border rounded px-1 text-center text-xs" value={r[field]||0} onChange={e => onUpdate(r.id, field, e.target.value)} />
+                          : <span className="font-semibold text-red-500">{r[field]||0}</span>
+                      ) : <span className="text-gray-300">—</span>}
                     </td>
-                  ))}
-                  <td className="px-3 py-2 text-center font-bold">{rowTotal}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+                  )
+                })}
+                {otherFields.map((f,fi) => (
+                  <td key={f} className="px-3 py-2 text-center">
+                    {editing
+                      ? <input type="number" className="w-14 border rounded px-1 text-center text-xs" value={r[f]||0} onChange={e => onUpdate(r.id, f, e.target.value)} />
+                      : <span className="font-semibold" style={{color:otherColors[otherLabels[fi]]}}>{r[f]||0}</span>}
+                  </td>
+                ))}
+                <td className="px-3 py-2 text-center font-bold">{rowTotal}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }
