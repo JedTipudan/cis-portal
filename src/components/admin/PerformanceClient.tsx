@@ -84,26 +84,31 @@ function CRLATable({ data, editing, onUpdate }: {
     'Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',
   }
 
+  // All unique lang columns in order: sb, fil, eng
+  const allLangCols = ['low_emerging_sb','low_emerging_fil','low_emerging_eng']
+  const langColLabels: Record<string,string> = {
+    low_emerging_sb: 'Sinugbuanong Binisaya',
+    low_emerging_fil: 'Filipino',
+    low_emerging_eng: 'English',
+  }
+
   return (
     <div className="space-y-3">
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full text-xs">
           <thead className="bg-[#7C9A6E] text-white">
             <tr>
-              <th className="px-3 py-2 text-left">Grade</th>
-              <th className="px-3 py-2 text-center" style={{backgroundColor:'#EF4444'}} colSpan={2}>Low Emerging Reader</th>
-              {otherLabels.map((l,i) => (
-                <th key={l} className="px-3 py-2 text-center text-xs whitespace-nowrap">{l}</th>
+              <th className="px-3 py-2 text-left" rowSpan={2}>Grade</th>
+              <th className="px-3 py-2 text-center" style={{backgroundColor:'#EF4444'}} colSpan={allLangCols.length}>Low Emerging Reader</th>
+              {otherLabels.map(l => (
+                <th key={l} className="px-3 py-2 text-center text-xs whitespace-nowrap" rowSpan={2}>{l}</th>
               ))}
-              <th className="px-3 py-2 text-center font-bold">Total</th>
+              <th className="px-3 py-2 text-center font-bold" rowSpan={2}>Total</th>
             </tr>
-            <tr className="bg-[#7C9A6E]/80 text-white text-[10px]">
-              <th className="px-3 py-1" />
-              {CRLA_GRADES.flatMap(g => CRLA_LOW_LANGS[g]).filter((v,i,a) => a.findIndex(x=>x.field===v.field)===i).map(lang => (
-                <th key={lang.field} className="px-3 py-1 text-center whitespace-nowrap" style={{backgroundColor:'#EF444488'}}>{lang.label}</th>
+            <tr style={{backgroundColor:'#EF444499'}}>
+              {allLangCols.map(f => (
+                <th key={f} className="px-3 py-1 text-center whitespace-nowrap text-[10px]">{langColLabels[f]}</th>
               ))}
-              {otherLabels.map(l => <th key={l} className="px-3 py-1" />)}
-              <th className="px-3 py-1" />
             </tr>
           </thead>
           <tbody>
@@ -111,17 +116,12 @@ function CRLATable({ data, editing, onUpdate }: {
               const r = data.find(x => x.grade_level === grade)
               if (!r) return null
               const langs = CRLA_LOW_LANGS[grade]
-              const allLowFields = ['low_emerging_sb','low_emerging_fil','low_emerging_eng']
               const lowTotal = langs.reduce((s,l) => s + Number(r[l.field]||0), 0)
               const rowTotal = lowTotal + otherFields.reduce((s,f) => s + Number(r[f]||0), 0)
               return (
                 <tr key={r.id} className={gi%2===0?'bg-white':'bg-gray-50'}>
                   <td className="px-3 py-2 font-medium whitespace-nowrap">{grade}</td>
-                  {/* Low Emerging — show value only for langs this grade uses, blank for others */}
-                  {allLowFields.filter((f,i,a) => {
-                    const allUsed = CRLA_GRADES.flatMap(g => CRLA_LOW_LANGS[g]).map(l=>l.field)
-                    return [...new Set(allUsed)].includes(f)
-                  }).map(field => {
+                  {allLangCols.map(field => {
                     const usedByGrade = langs.some(l => l.field === field)
                     return (
                       <td key={field} className="px-3 py-2 text-center">
