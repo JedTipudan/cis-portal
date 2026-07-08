@@ -10,13 +10,16 @@ export default function AttendancePageClient({ isAdmin }: { isAdmin: boolean }) 
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
+  async function fetchData() {
     setLoading(true)
-    supabase.from('attendance').select('*').eq('school_year', schoolYear).order('id')
-      .then(({ data }) => { setAttendance(data || []); setLoading(false) })
-  }, [schoolYear])
+    const { data } = await supabase.from('attendance').select('*').eq('school_year', schoolYear).order('id')
+    setAttendance(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchData() }, [schoolYear])
 
   if (loading) return <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading...</div>
 
-  return <AttendanceClient attendance={attendance} isAdmin={isAdmin} schoolYear={schoolYear} />
+  return <AttendanceClient attendance={attendance} isAdmin={isAdmin} schoolYear={schoolYear} onSaved={fetchData} />
 }

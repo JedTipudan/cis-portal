@@ -12,19 +12,20 @@ export default function EnrollmentPageClient({ isAdmin }: { isAdmin: boolean }) 
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
+  async function fetchData() {
     setLoading(true)
-    Promise.all([
+    const [{ data: e }, { data: lp }] = await Promise.all([
       supabase.from('enrollment').select('*').eq('school_year', schoolYear),
       supabase.from('learner_profile').select('*').eq('school_year', schoolYear).order('id'),
-    ]).then(([{ data: e }, { data: lp }]) => {
-      setEnrollment(sortEnrollment(e || []))
-      setLearnerProfile(lp || [])
-      setLoading(false)
-    })
-  }, [schoolYear])
+    ])
+    setEnrollment(sortEnrollment(e || []))
+    setLearnerProfile(lp || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchData() }, [schoolYear])
 
   if (loading) return <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading...</div>
 
-  return <EnrollmentClient enrollment={enrollment} learnerProfile={learnerProfile} isAdmin={isAdmin} schoolYear={schoolYear} />
+  return <EnrollmentClient enrollment={enrollment} learnerProfile={learnerProfile} isAdmin={isAdmin} schoolYear={schoolYear} onSaved={fetchData} />
 }

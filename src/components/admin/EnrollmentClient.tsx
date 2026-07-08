@@ -15,12 +15,9 @@ function getColor(category: string, index: number) {
 }
 
 export default function EnrollmentClient({
-  enrollment, learnerProfile, isAdmin, schoolYear = '2024-2025'
+  enrollment, learnerProfile, isAdmin, schoolYear = '2024-2025', onSaved
 }: {
-  enrollment: any[]
-  learnerProfile: any[]
-  isAdmin: boolean
-  schoolYear?: string
+  enrollment: any[]; learnerProfile: any[]; isAdmin: boolean; schoolYear?: string; onSaved?: () => void
 }) {
   const [rows, setRows] = useState(enrollment)
   const [profileRows, setProfileRows] = useState(learnerProfile)
@@ -46,7 +43,7 @@ export default function EnrollmentClient({
     }
     setSaving(false)
     setEditing(false)
-    window.location.reload()
+    onSaved?.()
   }
 
   async function saveProfile() {
@@ -60,7 +57,7 @@ export default function EnrollmentClient({
     }
     setSaving(false)
     setEditing(false)
-    window.location.reload()
+    onSaved?.()
   }
 
   async function deleteProfile(id: string) {

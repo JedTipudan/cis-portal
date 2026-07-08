@@ -10,13 +10,16 @@ export default function NutritionalPageClient({ isAdmin }: { isAdmin: boolean })
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
-  useEffect(() => {
+  async function fetchData() {
     setLoading(true)
-    supabase.from('nutritional_status').select('*').eq('school_year', schoolYear).order('grade_level')
-      .then(({ data: d }) => { setData(d || []); setLoading(false) })
-  }, [schoolYear])
+    const { data: d } = await supabase.from('nutritional_status').select('*').eq('school_year', schoolYear).order('grade_level')
+    setData(d || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchData() }, [schoolYear])
 
   if (loading) return <div className="flex items-center justify-center h-40 text-gray-400 text-sm">Loading...</div>
 
-  return <NutritionalClient data={data} isAdmin={isAdmin} schoolYear={schoolYear} />
+  return <NutritionalClient data={data} isAdmin={isAdmin} schoolYear={schoolYear} onSaved={fetchData} />
 }

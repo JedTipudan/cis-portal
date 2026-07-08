@@ -7,7 +7,7 @@ import ConfirmDialog from '@/components/ui/confirm-dialog'
 
 const MONTHS = ['June','July','August','September','October','November','December','January','February','March','April','May']
 
-export default function AttendanceClient({ attendance, isAdmin, schoolYear = '2024-2025' }: { attendance: any[]; isAdmin: boolean; schoolYear?: string }) {
+export default function AttendanceClient({ attendance, isAdmin, schoolYear = '2024-2025', onSaved }: { attendance: any[]; isAdmin: boolean; schoolYear?: string; onSaved?: () => void }) {
   const [rows, setRows] = useState(attendance)
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -29,8 +29,7 @@ export default function AttendanceClient({ attendance, isAdmin, schoolYear = '20
     }
     setSaving(false)
     setEditing(false)
-    window.location.reload()
-  }
+    onSaved?.()
 
   async function deleteRow(id: string) {
     await supabase.from('attendance').delete().eq('id', id)

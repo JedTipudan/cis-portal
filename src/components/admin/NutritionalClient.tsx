@@ -124,9 +124,9 @@ function NutritionChart({ rows, fields, labels, colors, title }: {
 }
 
 export default function NutritionalClient({
-  data, isAdmin, schoolYear
+  data, isAdmin, schoolYear, onSaved
 }: {
-  data: any[]; isAdmin: boolean; schoolYear: string
+  data: any[]; isAdmin: boolean; schoolYear: string; onSaved?: () => void
 }) {
   const [rows, setRows] = useState(data)
   const [tab, setTab] = useState<'bmi' | 'hfa'>('bmi')
@@ -153,8 +153,7 @@ export default function NutritionalClient({
     }
     setSaving(false)
     setEditing(false)
-    window.location.reload()
-  }
+    onSaved?.()
 
   async function deleteRow(id: string) {
     await supabase.from('nutritional_status').delete().eq('id', id)
