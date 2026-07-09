@@ -617,7 +617,7 @@ export default function PerformanceClient({
                   return true
                 })}
                 fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
-                editing={editing} onUpdate={updateReading}
+                editing={crlaGrade !== 'All' && editing} onUpdate={updateReading}
                 grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
                 mergeGrades={crlaGrade==='All'}
               />
