@@ -218,7 +218,7 @@ export default function PerformanceClient({
     if (tab==='kpi') {
       for (const r of kpiRows) await supabase.from('kpi').update({value:r.value}).eq('id',r.id)
     } else if (tab==='academic') {
-      for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps, term:selectedTerm}).eq('id',r.id)
+      for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps, term:selectedTerm, school_year:activeSchoolYear}).eq('id',r.id)
     } else {
       if (selectedAssessment==='Phil-IRI') {
         for (const g of PHILIRI_GRADES) {
@@ -230,7 +230,7 @@ export default function PerformanceClient({
             u.term = selectedTerm
             await supabase.from('philiri_assessment').update(u).eq('id',existing.id)
           } else {
-            const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm }
+            const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
             PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f]=0 }))
             await supabase.from('philiri_assessment').insert(row)
           }
@@ -249,7 +249,7 @@ export default function PerformanceClient({
             u.term = selectedTerm
             await supabase.from('reading_assessment').update(u).eq('id',existing.id)
           } else {
-            const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
+            const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
             fields.forEach(f => { row[f]=0 })
             if (selectedAssessment==='CRLA') { row.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 }) }
             await supabase.from('reading_assessment').insert(row)
@@ -276,7 +276,7 @@ export default function PerformanceClient({
     setSaving(true)
     if (selectedAssessment === 'Phil-IRI') {
       const toInsert = PHILIRI_GRADES.map(g => {
-        const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm }
+        const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
         PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f] = 0 }))
         return row
       })
@@ -287,7 +287,7 @@ export default function PerformanceClient({
       const fields = selectedAssessment === 'CRLA' ? CRLA_FIELDS : RMA_FIELDS
       const lang = selectedAssessment==='CRLA' && crlaGrade!=='All' ? (crlaLang||'default') : 'default'
       const toInsert = grades.map(g => {
-        const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm }
+        const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
         fields.forEach(f => { row[f] = 0 })
         if (selectedAssessment==='CRLA') { row.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 }) }
         return row
@@ -302,7 +302,7 @@ export default function PerformanceClient({
   async function initKpi() {
     setSaving(true)
     const indicators = Object.keys(KPI_META)
-    const toInsert = indicators.map(indicator => ({ indicator, value: 0, school_year: schoolYear }))
+    const toInsert = indicators.map(indicator => ({ indicator, value: 0, school_year: activeSchoolYear }))
     const { data } = await supabase.from('kpi').insert(toInsert).select()
     if (data) setKpiRows([...kpiRows, ...data])
     setSaving(false)
@@ -318,7 +318,7 @@ export default function PerformanceClient({
     const toInsert: any[] = []
     for (const g of GRADE_LEVELS) {
       for (const s of subjects) {
-        toInsert.push({ grade_level: g, subject: s, mps: 0, term: selectedTerm })
+        toInsert.push({ grade_level: g, subject: s, mps: 0, term: selectedTerm, school_year: activeSchoolYear })
       }
     }
     const { data } = await supabase.from('performance').insert(toInsert).select()
@@ -594,7 +594,7 @@ export default function PerformanceClient({
                     <p className="text-sm text-yellow-700">No data for <strong>{crlaGrade}</strong> — <strong>{CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===lang)?.label}</strong>. Create a row to start entering data.</p>
                     <button onClick={async () => {
                       setSaving(true)
-                      const row: any = { grade_level: crlaGrade, assessment_type: 'CRLA', reading_period: selectedReadingPeriod, term: selectedTerm, language: lang }
+                      const row: any = { grade_level: crlaGrade, assessment_type: 'CRLA', reading_period: selectedReadingPeriod, term: selectedTerm, language: lang, school_year: activeSchoolYear }
                       CRLA_FIELDS.forEach(f => { row[f]=0 })
                       const { data } = await supabase.from('reading_assessment').insert(row).select()
                       if (data) setReadingRows([...readingRows, ...data])
