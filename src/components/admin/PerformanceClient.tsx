@@ -3,329 +3,174 @@ import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts'
-import {
-  Pencil, Save, X, TrendingUp, Users, UserCheck,
-  GraduationCap, BookOpen, UserX, RefreshCw, UserMinus, ArrowRightLeft
-} from 'lucide-react'
+import { Pencil, Save, X, TrendingUp, Users, UserCheck, GraduationCap, BookOpen, UserX, RefreshCw, UserMinus, ArrowRightLeft } from 'lucide-react'
 import { useSchoolYear, getTermsOrQuarters, isTermBased } from '@/lib/SchoolYearContext'
+import { GRADE_LEVELS, CRLA_GRADES, PHILIRI_GRADES, READING_PERIODS, CRLA_SUBCATS, PHILIRI_SUBCATS, RMA_SUBCATS, NEGATIVE_KPIS, kpiStatus, ReadingTable } from './PerformanceHelpers'
 
-const GRADE_LEVELS = ['Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
-const PHILIRI_GRADES = ['Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 9','Grade 10']
-const READING_PERIODS = ['BoSy','MoSY','EoSY']
-
-// CRLA
-const CRLA_GRADES = ['Grade 1','Grade 2','Grade 3']
-const CRLA_LEVELS = ['Low Emerging Reader','High Emerging Reader','Developing Reader','Transition Reader','Reading at Grade Level']
-const CRLA_FIELDS = ['low_emerging','high_emerging','developing','transition','grade_level_reader']
-const CRLA_COLORS: Record<string,string> = {
-  'Low Emerging Reader':'#EF4444','High Emerging Reader':'#F97316',
-  'Developing Reader':'#F59E0B','Transition Reader':'#3B82F6','Reading at Grade Level':'#7C9A6E',
-}
-const CRLA_LANG_FIELDS: Record<string,{field:string;label:string}[]> = {
-  'Grade 1': [{field:'low_emerging_sb', label:'Sinugbuanong Binisaya'}],
-  'Grade 2': [{field:'low_emerging_sb', label:'Sinugbuanong Binisaya'},{field:'low_emerging_fil',label:'Filipino'}],
-  'Grade 3': [{field:'low_emerging_fil',label:'Filipino'},{field:'low_emerging_eng',label:'English'}],
-}
-
-// RMA
-const RMA_LEVELS = ['Emerging (Not Proficient)','Emerging (Low Proficient)','Developing (Nearly Proficient)','Transitioning (Proficient)','At Grade Level (Highly Proficient)']
-const RMA_FIELDS = ['not_proficient','low_proficient','nearly_proficient','proficient','highly_proficient']
-const RMA_COLORS: Record<string,string> = {
-  'Emerging (Not Proficient)':'#EF4444','Emerging (Low Proficient)':'#F97316',
-  'Developing (Nearly Proficient)':'#F59E0B','Transitioning (Proficient)':'#3B82F6',
-  'At Grade Level (Highly Proficient)':'#7C9A6E',
-}
-
-// Phil-IRI sub-categories
-const PHILIRI_SUBCATS: {key:string;label:string;fields:string[];levels:string[];colors:Record<string,string>}[] = [
-  { key: 'overall',  label: 'Overall Percentage',       fields: ['three_levels_down','two_levels_down','grade_ready'],                 levels: ['3-Levels Down','2-Levels Down','Grade Ready'],  colors: {'3-Levels Down':'#EF4444','2-Levels Down':'#F59E0B','Grade Ready':'#7C9A6E'} as Record<string,string> },
-  { key: 'tld_fil',  label: '3-Levels Down in Filipino', fields: ['tld_fil_frustration','tld_fil_instructional','tld_fil_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
-  { key: 'tld_eng',  label: '3-Levels Down in English',  fields: ['tld_eng_frustration','tld_eng_instructional','tld_eng_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
-  { key: 'twd_fil',  label: '2-Levels Down in Filipino', fields: ['twd_fil_frustration','twd_fil_instructional','twd_fil_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
-  { key: 'twd_eng',  label: '2-Levels Down in English',  fields: ['twd_eng_frustration','twd_eng_instructional','twd_eng_independent'], levels: ['Frustration','Instructional','Independent'],    colors: {'Frustration':'#EF4444','Instructional':'#3B82F6','Independent':'#7C9A6E'} as Record<string,string> },
-]
-
-const NEGATIVE_KPIS = new Set(['Dropout/School Leaver Rate','Repetition Rate'])
 const KPI_META: Record<string,{icon:any;desc:string;color:string}> = {
-  'Enrollment Rate':            {icon:Users,         desc:'Learners enrolled vs. school-age population',  color:'#3B82F6'},
-  'Participation Rate':         {icon:UserCheck,     desc:'Active learners attending school',             color:'#8B5CF6'},
-  'Cohort Survival Rate':       {icon:TrendingUp,    desc:'Learners reaching final grade of a cycle',     color:'#7C9A6E'},
-  'Completion Rate':            {icon:BookOpen,      desc:'Learners completing the full school cycle',    color:'#7C9A6E'},
-  'Promotion Rate':             {icon:GraduationCap, desc:'Learners promoted to the next grade level',    color:'#7C9A6E'},
-  'Graduation Rate':            {icon:GraduationCap, desc:'Learners graduating from the program',         color:'#7C9A6E'},
-  'Dropout/School Leaver Rate': {icon:UserX,         desc:'Learners who left school before completion',   color:'#EF4444'},
-  'Repetition Rate':            {icon:RefreshCw,     desc:'Learners repeating the same grade level',      color:'#F59E0B'},
-  'Retention Rate':             {icon:UserMinus,     desc:'Learners retained from previous school year',  color:'#7C9A6E'},
-  'Transition Rate':            {icon:ArrowRightLeft,desc:'Learners moving to the next education level',  color:'#3B82F6'},
-}
-
-function kpiStatus(indicator: string, value: number) {
-  if (NEGATIVE_KPIS.has(indicator)) {
-    if (value <= 1) return {label:'Excellent',cls:'bg-green-100 text-green-700'}
-    if (value <= 3) return {label:'Acceptable',cls:'bg-yellow-100 text-yellow-700'}
-    return {label:'Critical',cls:'bg-red-100 text-red-700'}
-  }
-  if (value >= 95) return {label:'Excellent',cls:'bg-green-100 text-green-700'}
-  if (value >= 85) return {label:'Good',cls:'bg-blue-100 text-blue-700'}
-  if (value >= 75) return {label:'Fair',cls:'bg-yellow-100 text-yellow-700'}
-  return {label:'Needs Attention',cls:'bg-red-100 text-red-700'}
-}
-
-function mergeByGrade(data: any[], grades: string[], fields: string[]) {
-  return grades.map(g => {
-    const rows = data.filter(r => r.grade_level === g)
-    if (rows.length === 0) return null
-    if (rows.length === 1) return rows[0]
-    // merge multiple language rows by summing numeric fields
-    const merged: any = { ...rows[0] }
-    fields.forEach(f => { merged[f] = rows.reduce((s, r) => s + Number(r[f] || 0), 0) })
-    return merged
-  }).filter(Boolean)
-}
-
-function ReadingTable({ data, fields, levels, colors, editing, onUpdate, grades, mergeGrades }: {
-  data: any[]; fields: string[]; levels: string[]; colors: Record<string,string>;
-  editing: boolean; onUpdate: (id:string,f:string,v:string)=>void; grades: string[];
-  mergeGrades?: boolean
-}) {
-  const sorted = mergeGrades
-    ? mergeByGrade(data, grades, fields)
-    : grades.map(g => data.find(r => r.grade_level === g)).filter(Boolean)
-  const totals = fields.map(f => sorted.reduce((s,r) => s + Number(r[f]||0), 0))
-  const grandTotal = totals.reduce((s,v) => s+v, 0)
-
-  const chartData = sorted.map(r => {
-    const obj: any = { name: r.grade_level.replace('Grade ','G') }
-    fields.forEach((f,i) => { obj[levels[i]] = Number(r[f]||0) })
-    return obj
-  })
-
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-3 mb-1">
-        {levels.map(l => (
-          <div key={l} className="flex items-center gap-1.5 text-xs">
-            <div className="w-3 h-3 rounded-full flex-shrink-0" style={{backgroundColor: colors[l]}} />
-            <span className="text-gray-600">{l}</span>
-          </div>
-        ))}
-      </div>
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="w-full text-sm">
-          <thead className="bg-[#7C9A6E] text-white">
-            <tr>
-              <th className="px-3 py-2 text-left whitespace-nowrap">Grade</th>
-              {levels.map(l => <th key={l} className="px-3 py-2 text-center text-xs whitespace-nowrap">{l}</th>)}
-              <th className="px-3 py-2 text-center font-bold">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((r,i) => {
-              const rowTotal = fields.reduce((s,f) => s + Number(r[f]||0), 0)
-              return (
-                <tr key={r.id} className={i%2===0?'bg-white':'bg-gray-50'}>
-                  <td className="px-3 py-2 font-medium whitespace-nowrap">{r.grade_level}</td>
-                  {fields.map((f,fi) => (
-                    <td key={f} className="px-3 py-2 text-center">
-                      {editing ? (
-                        <input type="number" className="w-14 border rounded px-1 text-center text-xs"
-                          value={r[f]||0} onChange={e => onUpdate(r.id, f, e.target.value)} />
-                      ) : (
-                        <span className="font-semibold" style={{color: colors[levels[fi]]}}>{r[f]||0}</span>
-                      )}
-                    </td>
-                  ))}
-                  <td className="px-3 py-2 text-center font-bold">{rowTotal}</td>
-                </tr>
-              )
-            })}
-            <tr className="bg-[#F5C842]/20 font-bold border-t-2 border-gray-300">
-              <td className="px-3 py-2">TOTAL</td>
-              {totals.map((t,i) => <td key={i} className="px-3 py-2 text-center" style={{color:colors[levels[i]]}}>{t}</td>)}
-              <td className="px-3 py-2 text-center">{grandTotal}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div className="bg-white rounded-xl border p-4">
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={chartData} margin={{top:5,right:10,left:-10,bottom:5}}>
-            <XAxis dataKey="name" tick={{fontSize:10}} />
-            <YAxis tick={{fontSize:10}} />
-            <Tooltip />
-            <Legend wrapperStyle={{fontSize:'10px'}} />
-            {levels.map((l,i) => (
-              <Bar key={l} dataKey={l} stackId="a" fill={colors[l]}
-                radius={i===levels.length-1?[3,3,0,0]:[0,0,0,0]} />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-    </div>
-  )
+  'Enrollment Rate':            {icon:Users,          desc:'Learners enrolled vs. school-age population', color:'#3B82F6'},
+  'Participation Rate':         {icon:UserCheck,      desc:'Active learners attending school',            color:'#8B5CF6'},
+  'Cohort Survival Rate':       {icon:TrendingUp,     desc:'Learners reaching final grade of a cycle',    color:'#7C9A6E'},
+  'Completion Rate':            {icon:BookOpen,       desc:'Learners completing the full school cycle',   color:'#7C9A6E'},
+  'Promotion Rate':             {icon:GraduationCap,  desc:'Learners promoted to the next grade level',   color:'#7C9A6E'},
+  'Graduation Rate':            {icon:GraduationCap,  desc:'Learners graduating from the program',        color:'#7C9A6E'},
+  'Dropout/School Leaver Rate': {icon:UserX,          desc:'Learners who left school before completion',  color:'#EF4444'},
+  'Repetition Rate':            {icon:RefreshCw,      desc:'Learners repeating the same grade level',     color:'#F59E0B'},
+  'Retention Rate':             {icon:UserMinus,      desc:'Learners retained from previous school year', color:'#7C9A6E'},
+  'Transition Rate':            {icon:ArrowRightLeft, desc:'Learners moving to the next education level', color:'#3B82F6'},
 }
 
 export default function PerformanceClient({
-  performance, kpi, reading, philiri, isAdmin, schoolYear = '2024-2025',
+  performance, kpi, crla, philiri, rma, isAdmin, schoolYear = '2024-2025',
 }: {
-  performance: any[]; kpi: any[]; reading: any[]; philiri: any[]; isAdmin: boolean; schoolYear?: string
+  performance: any[]; kpi: any[]; crla: any[]; philiri: any[]; rma: any[]
+  isAdmin: boolean; schoolYear?: string
 }) {
   const searchParams = useSearchParams()
-  const { schoolYear: ctxSchoolYear } = useSchoolYear()
-  const activeSchoolYear = schoolYear || ctxSchoolYear
-  const TERMS = getTermsOrQuarters(activeSchoolYear)
-  
-  const [tab, setTab] = useState<'kpi'|'academic'|'reading'>('kpi')
-  const [selectedGrade, setSelectedGrade] = useState('Grade 1')
-  const [selectedAssessment, setSelectedAssessment] = useState<'CRLA'|'Phil-IRI'|'RMA'>('CRLA')
-  const [philiriSubcat, setPhiliriSubcat] = useState('overall')
-  const [selectedTerm, setSelectedTerm] = useState(TERMS[0].value)
-  const [selectedReadingPeriod, setSelectedReadingPeriod] = useState('BoSy')
-  const [crlaGrade, setCrlaGrade] = useState('All')
-  const [crlaLang, setCrlaLang] = useState('all')
+  const { schoolYear: ctxSY } = useSchoolYear()
+  const activeSY = schoolYear || ctxSY
+  const TERMS = getTermsOrQuarters(activeSY)
 
-  useEffect(() => {
-    const t = searchParams.get('tab')
-    const a = searchParams.get('assessment')
-    if (t === 'kpi' || t === 'academic' || t === 'reading') setTab(t)
-    if (a === 'CRLA' || a === 'Phil-IRI' || a === 'RMA') setSelectedAssessment(a)
-  }, [searchParams])
-  useEffect(() => {
-    setSelectedTerm(TERMS[0].value)
-  }, [activeSchoolYear])
-  const [kpiRows, setKpiRows] = useState(kpi)
-  const [perfRows, setPerfRows] = useState(performance)
-  const [readingRows, setReadingRows] = useState(reading)
+  const [tab, setTab]                           = useState<'kpi'|'academic'|'reading'>('kpi')
+  const [selectedGrade, setSelectedGrade]       = useState('Grade 1')
+  const [assessment, setAssessment]             = useState<'CRLA'|'Phil-IRI'|'RMA'>('CRLA')
+  const [crlaSubcat, setCrlaSubcat]             = useState('overall')
+  const [philiriSubcat, setPhiliriSubcat]       = useState('overall')
+  const [rmaSubcat]                             = useState('overall')
+  const [term, setTerm]                         = useState(TERMS[0].value)
+  const [period, setPeriod]                     = useState('BoSy')
+
+  const [kpiRows,   setKpiRows]   = useState(kpi)
+  const [perfRows,  setPerfRows]  = useState(performance)
+  const [crlaRows,  setCrlaRows]  = useState(crla)
   const [philiriRows, setPhiliriRows] = useState(philiri)
-  const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
+  const [rmaRows,   setRmaRows]   = useState(rma)
+  const [editing,   setEditing]   = useState(false)
+  const [saving,    setSaving]    = useState(false)
   const supabase = createClient()
 
-  const gradeSubjects = perfRows.filter(r => r.grade_level === selectedGrade && r.term === selectedTerm)
-  const gradeMps = gradeSubjects.length
-    ? (gradeSubjects.reduce((s,r) => s+Number(r.mps),0)/gradeSubjects.length).toFixed(1) : '0'
+  useEffect(() => {
+    const t = searchParams.get('tab'), a = searchParams.get('assessment')
+    if (t === 'kpi' || t === 'academic' || t === 'reading') setTab(t)
+    if (a === 'CRLA' || a === 'Phil-IRI' || a === 'RMA') setAssessment(a)
+  }, [searchParams])
+  useEffect(() => { setTerm(TERMS[0].value) }, [activeSY])
 
-  const hasPerfDataForTerm = perfRows.some(r => r.term === selectedTerm)
+  const gradeSubjects = perfRows.filter(r => r.grade_level === selectedGrade && r.term === term)
+  const gradeMps = gradeSubjects.length ? (gradeSubjects.reduce((s,r) => s+Number(r.mps),0)/gradeSubjects.length).toFixed(1) : '0'
+  const hasPerfData = perfRows.some(r => r.term === term)
 
-  // CRLA / RMA data
-  const crlaData = CRLA_GRADES.map(g => readingRows.find(r => r.assessment_type==='CRLA' && r.grade_level===g && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)).filter(Boolean)
-  const rmaData = GRADE_LEVELS.map(g => readingRows.find(r => r.assessment_type==='RMA' && r.grade_level===g && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)).filter(Boolean)
+  const filteredCrla    = crlaRows.filter(r => r.reading_period === period && r.term === term)
+  const filteredPhiliri = philiriRows.filter(r => r.reading_period === period && r.term === term)
+  const filteredRma     = rmaRows.filter(r => r.reading_period === period && r.term === term)
 
-  const currentSubcat = PHILIRI_SUBCATS.find(s => s.key === philiriSubcat)!
-
-  async function save() {
-    setSaving(true)
-    if (tab==='kpi') {
-      for (const r of kpiRows) await supabase.from('kpi').update({value:r.value}).eq('id',r.id)
-    } else if (tab==='academic') {
-      for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps, term:selectedTerm, school_year:activeSchoolYear}).eq('id',r.id)
-    } else {
-      if (selectedAssessment==='Phil-IRI') {
-        for (const g of PHILIRI_GRADES) {
-          const existing = philiriRows.find(r => r.grade_level===g && r.reading_period===selectedReadingPeriod && r.term===selectedTerm)
-          if (existing) {
-            const u: any = {}
-            PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { u[f]=existing[f] }))
-            u.reading_period = selectedReadingPeriod
-            u.term = selectedTerm
-            await supabase.from('philiri_assessment').update(u).eq('id',existing.id)
-          } else {
-            const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
-            PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f]=0 }))
-            await supabase.from('philiri_assessment').insert(row)
-          }
-        }
-      } else {
-        const grades = selectedAssessment==='CRLA' ? CRLA_GRADES : GRADE_LEVELS
-        const fields = selectedAssessment==='CRLA' ? CRLA_FIELDS : RMA_FIELDS
-        for (const g of grades) {
-          const lang = selectedAssessment==='CRLA' && crlaGrade!=='All' ? (crlaLang||'default') : 'default'
-          const existing = readingRows.find(r => r.assessment_type===selectedAssessment && r.grade_level===g && r.reading_period===selectedReadingPeriod && r.term===selectedTerm && (selectedAssessment!=='CRLA' || r.language===lang))
-          if (existing) {
-            const u: any = { assessment_type: selectedAssessment }
-            fields.forEach(f => { u[f]=existing[f] })
-            if (selectedAssessment==='CRLA') { u.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { u[f]=existing[f]??0 }) }
-            u.reading_period = selectedReadingPeriod
-            u.term = selectedTerm
-            await supabase.from('reading_assessment').update(u).eq('id',existing.id)
-          } else {
-            const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
-            fields.forEach(f => { row[f]=0 })
-            if (selectedAssessment==='CRLA') { row.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 }) }
-            await supabase.from('reading_assessment').insert(row)
-          }
-        }
-      }
-    }
-    setSaving(false)
-    setEditing(false)
-  }
+  const curCrla    = CRLA_SUBCATS.find(s => s.key === crlaSubcat)!
+  const curPhiliri = PHILIRI_SUBCATS.find(s => s.key === philiriSubcat)!
+  const curRma     = RMA_SUBCATS[0]
 
   function cancelEdit() {
     setEditing(false)
     setKpiRows(kpi); setPerfRows(performance)
-    setReadingRows(reading); setPhiliriRows(philiri)
+    setCrlaRows(crla); setPhiliriRows(philiri); setRmaRows(rma)
   }
 
-  const updateReading = (id:string,f:string,v:string) =>
-    setReadingRows(readingRows.map(r => r.id===id ? {...r,[f]:v} : r))
-  const updatePhiliri = (id:string,f:string,v:string) =>
-    setPhiliriRows(philiriRows.map(r => r.id===id ? {...r,[f]:v} : r))
-
-  async function initData() {
+  async function save() {
     setSaving(true)
-    if (selectedAssessment === 'Phil-IRI') {
-      const toInsert = PHILIRI_GRADES.map(g => {
-        const row: any = { grade_level: g, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
-        PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f] = 0 }))
-        return row
-      })
-      const { data } = await supabase.from('philiri_assessment').insert(toInsert).select()
-      if (data) setPhiliriRows([...philiriRows, ...data])
+    if (tab === 'kpi') {
+      for (const r of kpiRows) await supabase.from('kpi').update({value:r.value}).eq('id',r.id)
+    } else if (tab === 'academic') {
+      for (const r of gradeSubjects) await supabase.from('performance').update({mps:r.mps}).eq('id',r.id)
     } else {
-      const grades = selectedAssessment === 'CRLA' ? CRLA_GRADES : GRADE_LEVELS
-      const fields = selectedAssessment === 'CRLA' ? CRLA_FIELDS : RMA_FIELDS
-      const lang = selectedAssessment==='CRLA' && crlaGrade!=='All' ? (crlaLang||'default') : 'default'
-      const toInsert = grades.map(g => {
-        const row: any = { grade_level: g, assessment_type: selectedAssessment, reading_period: selectedReadingPeriod, term: selectedTerm, school_year: activeSchoolYear }
-        fields.forEach(f => { row[f] = 0 })
-        if (selectedAssessment==='CRLA') { row.language = lang; ['low_emerging_sb','low_emerging_fil','low_emerging_eng'].forEach(f => { row[f]=0 }) }
-        return row
-      })
-      const { data } = await supabase.from('reading_assessment').insert(toInsert).select()
-      if (data) setReadingRows([...readingRows, ...data])
+      if (assessment === 'CRLA') {
+        for (const r of filteredCrla) {
+          const u: any = {}
+          CRLA_SUBCATS.forEach(s => s.fields.forEach(f => { u[f] = r[f] }))
+          await supabase.from('crla_assessment').update(u).eq('id', r.id)
+        }
+      } else if (assessment === 'Phil-IRI') {
+        for (const r of filteredPhiliri) {
+          const u: any = {}
+          PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { u[f] = r[f] }))
+          await supabase.from('philiri_assessment').update(u).eq('id', r.id)
+        }
+      } else {
+        for (const r of filteredRma) {
+          const u: any = {}
+          curRma.fields.forEach(f => { u[f] = r[f] })
+          await supabase.from('reading_assessment').update(u).eq('id', r.id)
+        }
+      }
     }
-    setSaving(false)
-    setEditing(true)
+    setSaving(false); setEditing(false)
   }
 
-  async function initKpi() {
+  async function initCrla() {
     setSaving(true)
-    const indicators = Object.keys(KPI_META)
-    const toInsert = indicators.map(indicator => ({ indicator, value: 0, school_year: activeSchoolYear }))
-    const { data } = await supabase.from('kpi').insert(toInsert).select()
-    if (data) setKpiRows([...kpiRows, ...data])
-    setSaving(false)
-    setEditing(true)
+    const toInsert = CRLA_GRADES.map(g => {
+      const row: any = { grade_level: g, reading_period: period, term, school_year: activeSY }
+      CRLA_SUBCATS.forEach(s => s.fields.forEach(f => { row[f] = 0 }))
+      return row
+    })
+    const { data } = await supabase.from('crla_assessment').insert(toInsert).select()
+    if (data) setCrlaRows([...crlaRows, ...data])
+    setSaving(false); setEditing(true)
+  }
+
+  async function initPhiliri() {
+    setSaving(true)
+    const toInsert = PHILIRI_GRADES.map(g => {
+      const row: any = { grade_level: g, reading_period: period, term, school_year: activeSY }
+      PHILIRI_SUBCATS.forEach(s => s.fields.forEach(f => { row[f] = 0 }))
+      return row
+    })
+    const { data } = await supabase.from('philiri_assessment').insert(toInsert).select()
+    if (data) setPhiliriRows([...philiriRows, ...data])
+    setSaving(false); setEditing(true)
+  }
+
+  async function initRma() {
+    setSaving(true)
+    const toInsert = GRADE_LEVELS.map(g => {
+      const row: any = { grade_level: g, assessment_type: 'RMA', reading_period: period, term, school_year: activeSY }
+      curRma.fields.forEach(f => { row[f] = 0 })
+      return row
+    })
+    const { data } = await supabase.from('reading_assessment').insert(toInsert).select()
+    if (data) setRmaRows([...rmaRows, ...data])
+    setSaving(false); setEditing(true)
   }
 
   async function initPerformance() {
     setSaving(true)
-    const subjects = [...new Set(perfRows.map(r => r.subject))]
-    if (subjects.length === 0) {
-      subjects.push('Math', 'English', 'Science', 'Filipino', 'Araling Panlipunan', 'MAPEH', 'EPP/TLE', 'Values Education')
-    }
+    const subjects = [...new Set(perfRows.map(r => r.subject))] as string[]
+    if (!subjects.length) subjects.push('Math','English','Science','Filipino','Araling Panlipunan','MAPEH','EPP/TLE','Values Education')
     const toInsert: any[] = []
-    for (const g of GRADE_LEVELS) {
-      for (const s of subjects) {
-        toInsert.push({ grade_level: g, subject: s, mps: 0, term: selectedTerm, school_year: activeSchoolYear })
-      }
-    }
+    for (const g of GRADE_LEVELS) for (const s of subjects) toInsert.push({grade_level:g,subject:s,mps:0,term,school_year:activeSY})
     const { data } = await supabase.from('performance').insert(toInsert).select()
     if (data) setPerfRows([...perfRows, ...data])
-    setSaving(false)
-    setEditing(true)
+    setSaving(false); setEditing(true)
   }
+
+  async function initKpi() {
+    setSaving(true)
+    const toInsert = Object.keys(KPI_META).map(indicator => ({indicator,value:0,school_year:activeSY}))
+    const { data } = await supabase.from('kpi').insert(toInsert).select()
+    if (data) setKpiRows([...kpiRows, ...data])
+    setSaving(false); setEditing(true)
+  }
+
+  const btnPill = (active: boolean) =>
+    `px-3 py-1 rounded-full text-xs font-medium border transition-colors ${active ? 'bg-[#7C9A6E] text-white border-[#7C9A6E]' : 'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`
+  const btnTab = (active: boolean) =>
+    `px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${active ? 'bg-white shadow text-[#7C9A6E]' : 'text-gray-500 hover:text-gray-700'}`
+  const noDataBanner = (msg: string, onInit: () => void) => (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+      <p className="text-sm text-yellow-700">{msg}</p>
+      <button onClick={onInit} disabled={saving} className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
+        {saving ? 'Creating...' : 'Create Data'}
+      </button>
+    </div>
+  )
 
   return (
     <div>
@@ -343,7 +188,7 @@ export default function PerformanceClient({
         {isAdmin && editing && (
           <div className="flex gap-2">
             <button onClick={save} disabled={saving} className="flex items-center gap-2 bg-[#7C9A6E] text-white px-4 py-2 rounded-lg text-sm">
-              <Save size={14}/> {saving?'Saving...':'Save'}
+              <Save size={14}/> {saving ? 'Saving...' : 'Save'}
             </button>
             <button onClick={cancelEdit} className="flex items-center gap-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">
               <X size={14}/> Cancel
@@ -354,33 +199,22 @@ export default function PerformanceClient({
 
       {/* Main Tabs */}
       <div className="flex flex-wrap gap-1 mb-5 bg-gray-100 p-1 rounded-lg w-fit">
-        {[{key:'kpi',label:'Key Performance Indicators'},{key:'academic',label:'Academic Performance'},{key:'reading',label:'Literacy and Numeracy'}].map(t => (
-          <button key={t.key} onClick={() => setTab(t.key as any)}
-            className={`px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${tab===t.key?'bg-white shadow text-[#7C9A6E]':'text-gray-500 hover:text-gray-700'}`}>
-            {t.label}
-          </button>
+        {([{key:'kpi',label:'Key Performance Indicators'},{key:'academic',label:'Academic Performance'},{key:'reading',label:'Literacy and Numeracy'}] as const).map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)} className={btnTab(tab===t.key)}>{t.label}</button>
         ))}
       </div>
 
-      {/* ── KPI TAB ── */}
-      {tab==='kpi' && (
+      {/* ── KPI ── */}
+      {tab === 'kpi' && (
         <div className="space-y-5">
-          {isAdmin && kpiRows.length === 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
-              <p className="text-sm text-yellow-700">No KPI data for <strong>{schoolYear}</strong>. Create rows to start entering data.</p>
-              <button onClick={initKpi} disabled={saving}
-                className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
-                {saving ? 'Creating...' : 'Create Data'}
-              </button>
-            </div>
-          )}
+          {isAdmin && !kpiRows.length && noDataBanner(`No KPI data for ${schoolYear}.`, initKpi)}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {kpiRows.map(r => {
               const meta = KPI_META[r.indicator] ?? {icon:TrendingUp,desc:'',color:'#6B7280'}
               const Icon = meta.icon
-              const isNeg = NEGATIVE_KPIS.has(r.indicator)
               const val = Number(r.value)
               const status = kpiStatus(r.indicator, val)
+              const isNeg = NEGATIVE_KPIS.has(r.indicator)
               const vc = isNeg?(val<=2?'#7C9A6E':'#EF4444'):(val>=90?'#7C9A6E':val>=75?'#3B82F6':'#EF4444')
               return (
                 <div key={r.id} className="bg-white rounded-xl border shadow-sm p-4 flex gap-4 items-start">
@@ -393,10 +227,9 @@ export default function PerformanceClient({
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${status.cls}`}>{status.label}</span>
                     </div>
                     <p className="text-xs text-gray-400 mt-0.5 mb-2">{meta.desc}</p>
-                    {editing ? (
-                      <input type="number" step="0.1" className="w-20 border rounded px-2 py-0.5 text-sm font-bold"
-                        value={r.value} onChange={e => setKpiRows(kpiRows.map(x => x.id===r.id?{...x,value:e.target.value}:x))}/>
-                    ) : <p className="text-2xl font-bold" style={{color:vc}}>{r.value}%</p>}
+                    {editing
+                      ? <input type="number" step="0.1" className="w-20 border rounded px-2 py-0.5 text-sm font-bold" value={r.value} onChange={e => setKpiRows(kpiRows.map(x => x.id===r.id?{...x,value:e.target.value}:x))}/>
+                      : <p className="text-2xl font-bold" style={{color:vc}}>{r.value}%</p>}
                     {!isNeg && <div className="mt-2 bg-gray-100 rounded-full h-1.5"><div className="h-1.5 rounded-full" style={{width:`${Math.min(val,100)}%`,backgroundColor:vc}}/></div>}
                   </div>
                 </div>
@@ -412,7 +245,7 @@ export default function PerformanceClient({
                 <Tooltip formatter={(v:any)=>`${v}%`}/>
                 <Bar dataKey="value" radius={[0,4,4,0]} label={{position:'right',fontSize:10,formatter:(v:any)=>`${v}%`}}>
                   {kpiRows.map((r,i) => {
-                    const isNeg=NEGATIVE_KPIS.has(r.indicator); const val=Number(r.value)
+                    const isNeg=NEGATIVE_KPIS.has(r.indicator), val=Number(r.value)
                     return <Cell key={i} fill={isNeg?(val<=2?'#7C9A6E':'#EF4444'):(val>=90?'#7C9A6E':val>=75?'#3B82F6':'#EF4444')}/>
                   })}
                 </Bar>
@@ -422,36 +255,16 @@ export default function PerformanceClient({
         </div>
       )}
 
-      {/* ── ACADEMIC TAB ── */}
-      {tab==='academic' && (
+      {/* ── ACADEMIC ── */}
+      {tab === 'academic' && (
         <div className="space-y-4">
-          {/* Term Selector */}
           <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs font-semibold text-gray-500">{isTermBased(activeSchoolYear) ? 'Term:' : 'Quarter:'}</span>
-            {TERMS.map(t => (
-              <button key={t.value} onClick={() => setSelectedTerm(t.value)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedTerm===t.value?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {t.label}
-              </button>
-            ))}
+            <span className="text-xs font-semibold text-gray-500">{isTermBased(activeSY)?'Term:':'Quarter:'}</span>
+            {TERMS.map(t => <button key={t.value} onClick={() => setTerm(t.value)} className={btnPill(term===t.value)}>{t.label}</button>)}
           </div>
-          {/* No data banner for academic */}
-          {isAdmin && !hasPerfDataForTerm && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
-              <p className="text-sm text-yellow-700">No performance data for <strong>{selectedTerm}</strong>. Create empty rows to start entering data.</p>
-              <button onClick={initPerformance} disabled={saving}
-                className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
-                {saving ? 'Creating...' : 'Create Data'}
-              </button>
-            </div>
-          )}
+          {isAdmin && !hasPerfData && noDataBanner(`No performance data for ${term}.`, initPerformance)}
           <div className="flex flex-wrap gap-2">
-            {GRADE_LEVELS.map(g => (
-              <button key={g} onClick={() => setSelectedGrade(g)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedGrade===g?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {g}
-              </button>
-            ))}
+            {GRADE_LEVELS.map(g => <button key={g} onClick={() => setSelectedGrade(g)} className={btnPill(selectedGrade===g)}>{g}</button>)}
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="bg-white rounded-xl shadow-sm border p-4">
@@ -482,10 +295,9 @@ export default function PerformanceClient({
                     <tr key={r.id} className={i%2===0?'bg-white':'bg-gray-50'}>
                       <td className="px-4 py-2">{r.subject}</td>
                       <td className="px-4 py-2 text-center">
-                        {editing ? (
-                          <input type="number" step="0.1" className="w-20 border rounded px-1 text-center text-xs" value={r.mps}
-                            onChange={e => setPerfRows(perfRows.map(x => x.id===r.id?{...x,mps:e.target.value}:x))}/>
-                        ) : <span className="font-semibold">{r.mps}</span>}
+                        {editing
+                          ? <input type="number" step="0.1" className="w-20 border rounded px-1 text-center text-xs" value={r.mps} onChange={e => setPerfRows(perfRows.map(x => x.id===r.id?{...x,mps:e.target.value}:x))}/>
+                          : <span className="font-semibold">{r.mps}</span>}
                       </td>
                       <td className="px-4 py-2 text-center">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${Number(r.mps)>=85?'bg-green-100 text-green-700':Number(r.mps)>=75?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}`}>
@@ -506,163 +318,75 @@ export default function PerformanceClient({
         </div>
       )}
 
-      {/* ── LITERACY AND NUMERACY TAB ── */}
-      {tab==='reading' && (
+      {/* ── LITERACY & NUMERACY ── */}
+      {tab === 'reading' && (
         <div className="space-y-4">
-          {/* Reading Period Selector */}
+          {/* Period */}
           <div className="flex flex-wrap gap-2 items-center">
             <span className="text-xs font-semibold text-gray-500">Period:</span>
             {READING_PERIODS.map(p => (
-              <button key={p} onClick={() => setSelectedReadingPeriod(p)}
-                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${selectedReadingPeriod===p?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {p === 'BoSy' ? 'BoSy (Beginning of School Year)' : p === 'MoSY' ? 'MoSY (Middle of School Year)' : 'EoSY (End of School Year)'}
+              <button key={p} onClick={() => setPeriod(p)} className={btnPill(period===p)}>
+                {p==='BoSy'?'BoSy (Beginning of School Year)':p==='MoSY'?'MoSY (Middle of School Year)':'EoSY (End of School Year)'}
               </button>
             ))}
           </div>
-          {/* Assessment selector */}
+          {/* Assessment */}
           <div className="flex flex-wrap gap-2">
-            {([
-              { key: 'CRLA', label: 'CRLA', full: 'Comprehensive Rapid Literacy Assessment', grades: 'Gr.1–3' },
-              { key: 'Phil-IRI', label: 'Phil-IRI', full: 'Philippine Informal Reading Inventory', grades: 'Gr.4–10' },
-              { key: 'RMA', label: 'RMA', full: 'Rapid Math Assessment', grades: 'Gr.1–10' },
-            ]).map(a => (
-              <button key={a.key} onClick={() => setSelectedAssessment(a.key as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${selectedAssessment===a.key?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
-                {a.label}
-                <span className="ml-1.5 text-xs font-normal opacity-70">
-                  ({a.grades})
-                </span>
+            {([{key:'CRLA',grades:'Gr.1–3'},{key:'Phil-IRI',grades:'Gr.4–10'},{key:'RMA',grades:'Gr.1–10'}] as const).map(a => (
+              <button key={a.key} onClick={() => setAssessment(a.key)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${assessment===a.key?'bg-[#7C9A6E] text-white border-[#7C9A6E]':'bg-white text-gray-600 border-gray-300 hover:border-[#7C9A6E]'}`}>
+                {a.key} <span className="text-xs font-normal opacity-70">({a.grades})</span>
               </button>
             ))}
           </div>
-
-          {/* No data banner */}
-          {(() => {
-            const noData = selectedAssessment === 'Phil-IRI'
-              ? !philiriRows.some(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
-              : !readingRows.some(r => r.assessment_type === selectedAssessment && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
-            if (!noData || !isAdmin) return null
-            return (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
-                <p className="text-sm text-yellow-700">No data for <strong>{selectedTerm}</strong> — <strong>{selectedReadingPeriod}</strong>. Create empty rows to start entering data.</p>
-                <button onClick={initData} disabled={saving}
-                  className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
-                  {saving ? 'Creating...' : 'Create Data'}
-                </button>
-              </div>
-            )
-          })()}
 
           {/* CRLA */}
-          {selectedAssessment==='CRLA' && (
+          {assessment === 'CRLA' && (
             <div className="space-y-3">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <strong>CRLA</strong> — Comprehensive Rapid Literacy Assessment for Grades 1–3. Measures early reading fluency and comprehension.
+                <strong>CRLA</strong> — Comprehensive Rapid Literacy Assessment for Grades 1–3.
               </div>
-              {/* Grade + Language selector */}
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-gray-500">Grade:</span>
-                  <select value={crlaGrade}
-                    onChange={e => { setCrlaGrade(e.target.value); setCrlaLang(e.target.value==='All' ? 'all' : CRLA_LANG_FIELDS[e.target.value][0].field) }}
-                    className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
-                    <option value="All">All</option>
-                    {CRLA_GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
-                </div>
-                {crlaGrade !== 'All' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-gray-500">Language:</span>
-                    <select value={crlaLang} onChange={e => setCrlaLang(e.target.value)}
-                      className="border rounded-lg px-3 py-1.5 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#7C9A6E]">
-                      {CRLA_LANG_FIELDS[crlaGrade].map(l => <option key={l.field} value={l.field}>{l.label}</option>)}
-                    </select>
-                  </div>
-                )}
+              {isAdmin && !filteredCrla.length && noDataBanner(`No CRLA data for ${term} — ${period}.`, initCrla)}
+              <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg w-fit">
+                {CRLA_SUBCATS.map(s => <button key={s.key} onClick={() => setCrlaSubcat(s.key)} className={btnTab(crlaSubcat===s.key)}>{s.label}</button>)}
               </div>
-              {/* Per grade+language no-data banner */}
-              {(() => {
-                if (!isAdmin || crlaGrade === 'All') return null
-                const lang = crlaLang || 'default'
-                const hasData = readingRows.some(r =>
-                  r.assessment_type==='CRLA' && r.grade_level===crlaGrade &&
-                  r.reading_period===selectedReadingPeriod && r.term===selectedTerm && r.language===lang
-                )
-                if (hasData) return null
-                return (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
-                    <p className="text-sm text-yellow-700">No data for <strong>{crlaGrade}</strong> — <strong>{CRLA_LANG_FIELDS[crlaGrade].find(l=>l.field===lang)?.label}</strong>. Create a row to start entering data.</p>
-                    <button onClick={async () => {
-                      setSaving(true)
-                      const row: any = { grade_level: crlaGrade, assessment_type: 'CRLA', reading_period: selectedReadingPeriod, term: selectedTerm, language: lang, school_year: activeSchoolYear }
-                      CRLA_FIELDS.forEach(f => { row[f]=0 })
-                      const { data } = await supabase.from('reading_assessment').insert(row).select()
-                      if (data) setReadingRows([...readingRows, ...data])
-                      setSaving(false)
-                      setEditing(true)
-                    }} disabled={saving}
-                      className="ml-4 px-4 py-2 bg-[#7C9A6E] text-white rounded-lg text-sm font-medium hover:bg-[#5a7a52] disabled:opacity-50 whitespace-nowrap">
-                      {saving ? 'Creating...' : 'Create Data'}
-                    </button>
-                  </div>
-                )
-              })()}
               <ReadingTable
-                data={readingRows.filter(r => {
-                  if (r.assessment_type !== 'CRLA') return false
-                  if (r.reading_period !== selectedReadingPeriod) return false
-                  if (r.term !== selectedTerm) return false
-                  if (crlaGrade !== 'All' && r.grade_level !== crlaGrade) return false
-                  if (crlaGrade !== 'All' && r.language !== (crlaLang || 'default')) return false
-                  return true
-                })}
-                fields={CRLA_FIELDS} levels={CRLA_LEVELS} colors={CRLA_COLORS}
-                editing={crlaGrade !== 'All' && editing} onUpdate={updateReading}
-                grades={crlaGrade==='All' ? CRLA_GRADES : [crlaGrade]}
-                mergeGrades={crlaGrade==='All'}
+                data={filteredCrla} fields={curCrla.fields} levels={curCrla.levels} colors={curCrla.colors}
+                editing={editing} onUpdate={(id,f,v) => setCrlaRows(crlaRows.map(r => r.id===id?{...r,[f]:v}:r))}
+                grades={CRLA_GRADES}
               />
             </div>
           )}
 
           {/* Phil-IRI */}
-          {selectedAssessment==='Phil-IRI' && (
-            <div className="space-y-4">
+          {assessment === 'Phil-IRI' && (
+            <div className="space-y-3">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <strong>Phil-IRI</strong> — Philippine Informal Reading Inventory for Grades 4–10. DepEd standard tool for reading proficiency in Filipino & English.
+                <strong>Phil-IRI</strong> — Philippine Informal Reading Inventory for Grades 4–10.
               </div>
-
-              {/* Sub-category tabs */}
+              {isAdmin && !filteredPhiliri.length && noDataBanner(`No Phil-IRI data for ${term} — ${period}.`, initPhiliri)}
               <div className="flex flex-wrap gap-1 bg-gray-100 p-1 rounded-lg w-fit">
-                {PHILIRI_SUBCATS.map(s => (
-                  <button key={s.key} onClick={() => setPhiliriSubcat(s.key)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap ${philiriSubcat===s.key?'bg-white shadow text-[#7C9A6E]':'text-gray-500 hover:text-gray-700'}`}>
-                    {s.label}
-                  </button>
-                ))}
+                {PHILIRI_SUBCATS.map(s => <button key={s.key} onClick={() => setPhiliriSubcat(s.key)} className={btnTab(philiriSubcat===s.key)}>{s.label}</button>)}
               </div>
-
               <ReadingTable
-                data={philiriRows.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
-                fields={currentSubcat.fields}
-                levels={currentSubcat.levels}
-                colors={currentSubcat.colors}
-                editing={editing}
-                onUpdate={updatePhiliri}
+                data={filteredPhiliri} fields={curPhiliri.fields} levels={curPhiliri.levels} colors={curPhiliri.colors}
+                editing={editing} onUpdate={(id,f,v) => setPhiliriRows(philiriRows.map(r => r.id===id?{...r,[f]:v}:r))}
                 grades={PHILIRI_GRADES}
               />
             </div>
           )}
 
           {/* RMA */}
-          {selectedAssessment==='RMA' && (
+          {assessment === 'RMA' && (
             <div className="space-y-3">
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                <strong>RMA</strong> — Rapid Math Assessment for Grades 1–10. Measures numeracy skills and mathematical proficiency.
+                <strong>RMA</strong> — Rapid Math Assessment for Grades 1–10.
               </div>
+              {isAdmin && !filteredRma.length && noDataBanner(`No RMA data for ${term} — ${period}.`, initRma)}
               <ReadingTable
-                data={readingRows.filter(r => r.assessment_type==='RMA' && r.reading_period === selectedReadingPeriod && r.term === selectedTerm)}
-                fields={RMA_FIELDS} levels={RMA_LEVELS} colors={RMA_COLORS}
-                editing={editing} onUpdate={updateReading} grades={GRADE_LEVELS}
+                data={filteredRma} fields={curRma.fields} levels={curRma.levels} colors={curRma.colors}
+                editing={editing} onUpdate={(id,f,v) => setRmaRows(rmaRows.map(r => r.id===id?{...r,[f]:v}:r))}
+                grades={GRADE_LEVELS}
               />
             </div>
           )}

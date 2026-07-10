@@ -45,6 +45,7 @@ interface Props {
   programsMonthly: any[]
   reading: any[]
   philiri: any[]
+  rma: any[]
   nutritional: any[]
   isAdmin: boolean
 }
@@ -80,7 +81,7 @@ function getMpsByGrade(performance: any[]) {
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
   programs, transparency, achievements, needs, attendance, learnerProfile,
-  otherFunds, mooeMonthly, programsMonthly, reading, philiri, nutritional, isAdmin
+  otherFunds, mooeMonthly, programsMonthly, reading: crla, philiri, rma, nutritional, isAdmin
 }: Props) {
   const { schoolYear } = useSchoolYear()
   const TERMS = getTermsOrQuarters(schoolYear)
@@ -111,25 +112,21 @@ export default function DashboardClient({
     setSelectedTerm(TERMS[0].value)
   }, [schoolYear])
 
-  // Reading assessment summary for dashboard (filtered by selected reading period)
-  const filteredReading = reading.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
+  const filteredCrla   = crla.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
   const filteredPhiliri = philiri.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
+  const filteredRma     = rma.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
 
-  const crlaTotal = filteredReading.filter(r => r.assessment_type === 'CRLA')
-    .reduce((s, r) => s + Number(r.low_emerging||0) + Number(r.high_emerging||0) + Number(r.developing||0) + Number(r.transition||0) + Number(r.grade_level_reader||0), 0)
-  const crlaGradeLevel = filteredReading.filter(r => r.assessment_type === 'CRLA')
-    .reduce((s, r) => s + Number(r.grade_level_reader||0), 0)
-  const crlaRate = crlaTotal > 0 ? Math.round((crlaGradeLevel / crlaTotal) * 100) : 0
+  const crlaTotal      = filteredCrla.reduce((s,r) => s + Number(r.overall_low_emerging||0) + Number(r.overall_high_emerging||0) + Number(r.overall_developing||0) + Number(r.overall_transition||0) + Number(r.overall_grade_level_reader||0), 0)
+  const crlaGradeLevel = filteredCrla.reduce((s,r) => s + Number(r.overall_grade_level_reader||0), 0)
+  const crlaRate       = crlaTotal > 0 ? Math.round((crlaGradeLevel / crlaTotal) * 100) : 0
 
-  const philiriTotal = filteredPhiliri.reduce((s, r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
-  const philiriReady = filteredPhiliri.reduce((s, r) => s + Number(r.grade_ready||0), 0)
-  const philiriRate = philiriTotal > 0 ? Math.round((philiriReady / philiriTotal) * 100) : 0
+  const philiriTotal = filteredPhiliri.reduce((s,r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
+  const philiriReady = filteredPhiliri.reduce((s,r) => s + Number(r.grade_ready||0), 0)
+  const philiriRate  = philiriTotal > 0 ? Math.round((philiriReady / philiriTotal) * 100) : 0
 
-  const rmaTotal = filteredReading.filter(r => r.assessment_type === 'RMA')
-    .reduce((s, r) => s + Number(r.not_proficient||0) + Number(r.low_proficient||0) + Number(r.nearly_proficient||0) + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
-  const rmaProficient = filteredReading.filter(r => r.assessment_type === 'RMA')
-    .reduce((s, r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
-  const rmaRate = rmaTotal > 0 ? Math.round((rmaProficient / rmaTotal) * 100) : 0
+  const rmaTotal     = filteredRma.reduce((s,r) => s + Number(r.not_proficient||0) + Number(r.low_proficient||0) + Number(r.nearly_proficient||0) + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
+  const rmaProficient= filteredRma.reduce((s,r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
+  const rmaRate      = rmaTotal > 0 ? Math.round((rmaProficient / rmaTotal) * 100) : 0
 
   const enrollmentChartData = enrollment.map(r => ({
     name: r.grade_level.replace('Grade ', 'G').replace('Kinder', 'K'),

@@ -18,8 +18,8 @@ export default function DashboardPageClient({ isAdmin }: { isAdmin: boolean }) {
       { data: personnel }, { data: facilities }, { data: programs },
       { data: transparency }, { data: achievements }, { data: needs },
       { data: attendance }, { data: learnerProfile }, { data: otherFunds },
-      { data: mooeMonthly }, { data: programsMonthly }, { data: reading },
-      { data: philiri }, { data: nutritional }, { data: profileRows },
+      { data: mooeMonthly }, { data: programsMonthly }, { data: crla },
+      { data: philiri }, { data: rma }, { data: nutritional }, { data: profileRows },
     ] = await Promise.all([
       supabase.from('enrollment').select('*').eq('school_year', sy).order('id'),
       supabase.from('performance').select('*').eq('school_year', sy).order('grade_level').order('subject'),
@@ -35,8 +35,9 @@ export default function DashboardPageClient({ isAdmin }: { isAdmin: boolean }) {
       supabase.from('other_funds').select('*').order('id'),
       supabase.from('mooe_monthly').select('*').order('id'),
       supabase.from('programs_monthly').select('*').order('id'),
-      supabase.from('reading_assessment').select('*').eq('school_year', sy).order('grade_level'),
+      supabase.from('crla_assessment').select('*').eq('school_year', sy).order('grade_level'),
       supabase.from('philiri_assessment').select('*').eq('school_year', sy).order('grade_level'),
+      supabase.from('reading_assessment').select('*').eq('school_year', sy).eq('assessment_type','RMA').order('grade_level'),
       supabase.from('nutritional_status').select('*').eq('school_year', sy).order('grade_level'),
       supabase.from('school_profile').select('*').single(),
     ])
@@ -57,8 +58,9 @@ export default function DashboardPageClient({ isAdmin }: { isAdmin: boolean }) {
       otherFunds: otherFunds || [],
       mooeMonthly: mooeMonthly || [],
       programsMonthly: programsMonthly || [],
-      reading: reading || [],
+      crla: crla || [],
       philiri: philiri || [],
+      rma: rma || [],
       nutritional: nutritional || [],
     })
   }
