@@ -116,17 +116,28 @@ export default function DashboardClient({
   const filteredPhiliri = philiri.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
   const filteredRma     = rma.filter(r => r.reading_period === selectedReadingPeriod && r.term === selectedTerm)
 
-  const crlaTotal      = filteredCrla.reduce((s,r) => s + Number(r.overall_low_emerging||0) + Number(r.overall_high_emerging||0) + Number(r.overall_developing||0) + Number(r.overall_transition||0) + Number(r.overall_grade_level_reader||0), 0)
-  const crlaGradeLevel = filteredCrla.reduce((s,r) => s + Number(r.overall_grade_level_reader||0), 0)
-  const crlaRate       = crlaTotal > 0 ? Math.round((crlaGradeLevel / crlaTotal) * 100) : 0
+  const KS1_GRADES = ['Grade 1','Grade 2','Grade 3']
+  const KS2_GRADES = ['Grade 4','Grade 5','Grade 6']
+  const KS3_GRADES = ['Grade 7','Grade 8','Grade 9','Grade 10']
 
-  const philiriTotal = filteredPhiliri.reduce((s,r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
-  const philiriReady = filteredPhiliri.reduce((s,r) => s + Number(r.grade_ready||0), 0)
-  const philiriRate  = philiriTotal > 0 ? Math.round((philiriReady / philiriTotal) * 100) : 0
-
-  const rmaTotal     = filteredRma.reduce((s,r) => s + Number(r.not_proficient||0) + Number(r.low_proficient||0) + Number(r.nearly_proficient||0) + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
-  const rmaProficient= filteredRma.reduce((s,r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
-  const rmaRate      = rmaTotal > 0 ? Math.round((rmaProficient / rmaTotal) * 100) : 0
+  function crlaRateFor(grades: string[]) {
+    const rows = filteredCrla.filter(r => grades.includes(r.grade_level))
+    const total = rows.reduce((s,r) => s + Number(r.overall_low_emerging||0) + Number(r.overall_high_emerging||0) + Number(r.overall_developing||0) + Number(r.overall_transition||0) + Number(r.overall_grade_level_reader||0), 0)
+    const gl    = rows.reduce((s,r) => s + Number(r.overall_grade_level_reader||0), 0)
+    return total > 0 ? Math.round((gl / total) * 100) : 0
+  }
+  function philiriRateFor(grades: string[]) {
+    const rows = filteredPhiliri.filter(r => grades.includes(r.grade_level))
+    const total = rows.reduce((s,r) => s + Number(r.three_levels_down||0) + Number(r.two_levels_down||0) + Number(r.grade_ready||0), 0)
+    const ready = rows.reduce((s,r) => s + Number(r.grade_ready||0), 0)
+    return total > 0 ? Math.round((ready / total) * 100) : 0
+  }
+  function rmaRateFor(grades: string[]) {
+    const rows = filteredRma.filter(r => grades.includes(r.grade_level))
+    const total = rows.reduce((s,r) => s + Number(r.not_proficient||0) + Number(r.low_proficient||0) + Number(r.nearly_proficient||0) + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
+    const prof  = rows.reduce((s,r) => s + Number(r.proficient||0) + Number(r.highly_proficient||0), 0)
+    return total > 0 ? Math.round((prof / total) * 100) : 0
+  }
 
   const enrollmentChartData = enrollment.map(r => ({
     name: r.grade_level.replace('Grade ', 'G').replace('Kinder', 'K'),
@@ -219,16 +230,16 @@ export default function DashboardClient({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { label: 'KS1 (Grades 1–3)', color: '#3B82F6', items: [
-              { name: 'CRLA', sub: 'Comprehensive Rapid Literacy Assessment', rate: crlaRate, href: '/dashboard/performance?tab=reading&assessment=CRLA' },
-              { name: 'RMA', sub: 'Rapid Math Assessment', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+              { name: 'CRLA',    sub: 'Comprehensive Rapid Literacy Assessment', rate: crlaRateFor(KS1_GRADES),    href: '/dashboard/performance?tab=reading&assessment=CRLA' },
+              { name: 'RMA',     sub: 'Rapid Math Assessment',                   rate: rmaRateFor(KS1_GRADES),     href: '/dashboard/performance?tab=reading&assessment=RMA' },
             ]},
             { label: 'KS2 (Grades 4–6)', color: '#7C9A6E', items: [
-              { name: 'Phil-IRI', sub: 'Philippine Informal Reading Inventory', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
-              { name: 'RMA', sub: 'Rapid Math Assessment', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+              { name: 'Phil-IRI',sub: 'Philippine Informal Reading Inventory',   rate: philiriRateFor(KS2_GRADES), href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+              { name: 'RMA',     sub: 'Rapid Math Assessment',                   rate: rmaRateFor(KS2_GRADES),     href: '/dashboard/performance?tab=reading&assessment=RMA' },
             ]},
             { label: 'KS3 (Grades 7–10)', color: '#8B5CF6', items: [
-              { name: 'Phil-IRI', sub: 'Philippine Informal Reading Inventory', rate: philiriRate, href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
-              { name: 'RMA', sub: 'Rapid Math Assessment', rate: rmaRate, href: '/dashboard/performance?tab=reading&assessment=RMA' },
+              { name: 'Phil-IRI',sub: 'Philippine Informal Reading Inventory',   rate: philiriRateFor(KS3_GRADES), href: '/dashboard/performance?tab=reading&assessment=Phil-IRI' },
+              { name: 'RMA',     sub: 'Rapid Math Assessment',                   rate: rmaRateFor(KS3_GRADES),     href: '/dashboard/performance?tab=reading&assessment=RMA' },
             ]},
           ].map(group => (
             <div key={group.label} className="border rounded-xl p-4">
