@@ -43,7 +43,7 @@ interface Props {
   otherFunds: any[]
   mooeMonthly: any[]
   programsMonthly: any[]
-  reading: any[]
+  crla: any[]
   philiri: any[]
   rma: any[]
   nutritional: any[]
@@ -81,7 +81,7 @@ function getMpsByGrade(performance: any[]) {
 export default function DashboardClient({
   profile, enrollment, performance, kpi, personnel, facilities,
   programs, transparency, achievements, needs, attendance, learnerProfile,
-  otherFunds, mooeMonthly, programsMonthly, reading: crla, philiri, rma, nutritional, isAdmin
+  otherFunds, mooeMonthly, programsMonthly, crla, philiri, rma, nutritional, isAdmin
 }: Props) {
   const { schoolYear } = useSchoolYear()
   const TERMS = getTermsOrQuarters(schoolYear)
