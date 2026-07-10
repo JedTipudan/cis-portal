@@ -321,7 +321,11 @@ export default function TransparencyClient({
                   const bal = Number(r.allocated) - Number(r.utilized)
                   return (
                     <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2 font-medium">{r.month}</td>
+                      <td className="px-4 py-2 font-medium">
+                        {editing && r.isNew
+                          ? <select className="border rounded px-2 py-1 text-xs" value={r.month} onChange={e => updateMooe(r.id,'month',e.target.value)}>{MONTHS.map(m=><option key={m}>{m}</option>)}</select>
+                          : r.month}
+                      </td>
                       <td className="px-4 py-2 text-right">
                         {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.allocated} onChange={e => updateMooe(r.id, 'allocated', e.target.value)} />
                           : <span className="text-[#7C9A6E] font-semibold">{fmt(r.allocated)}</span>}
@@ -403,7 +407,11 @@ export default function TransparencyClient({
               <tbody>
                 {progRows.map((r, i) => (
                   <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                    <td className="px-4 py-2 font-medium">{r.month}</td>
+                    <td className="px-4 py-2 font-medium">
+                      {editing && r.isNew
+                        ? <select className="border rounded px-2 py-1 text-xs" value={r.month} onChange={e => updateProg(r.id,'month',e.target.value)}>{MONTHS.map(m=><option key={m}>{m}</option>)}</select>
+                        : r.month}
+                    </td>
                     {['implemented', 'ongoing', 'completed'].map(f => (
                       <td key={f} className="px-4 py-2 text-center">
                         {editing ? <input type="number" className="w-16 border rounded px-1 text-center text-xs" value={r[f]} onChange={e => updateProg(r.id, f, e.target.value)} />
@@ -485,7 +493,11 @@ export default function TransparencyClient({
                   const bal = Number(r.igp_capitalization) - Number(r.igp_reinvestment)
                   return (
                     <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2 font-medium">{r.month}</td>
+                      <td className="px-4 py-2 font-medium">
+                        {editing && r.isNew
+                          ? <select className="border rounded px-2 py-1 text-xs" value={r.month} onChange={e => updateFund(r.id,'month',e.target.value)}>{MONTHS.map(m=><option key={m}>{m}</option>)}</select>
+                          : r.month}
+                      </td>
                       <td className="px-4 py-2 text-right">
                         {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.igp_capitalization} onChange={e => updateFund(r.id, 'igp_capitalization', e.target.value)} />
                           : <span className="text-[#7C9A6E] font-semibold">{fmt(r.igp_capitalization)}</span>}
@@ -528,7 +540,9 @@ export default function TransparencyClient({
                   const bal = Number(r.canteen_capitalization) - Number(r.canteen_reinvestment)
                   return (
                     <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-2 font-medium">{r.month}</td>
+                      <td className="px-4 py-2 font-medium">
+                        {r.month}
+                      </td>
                       <td className="px-4 py-2 text-right">
                         {editing ? <input type="number" className="w-28 border rounded px-2 py-1 text-xs text-right" value={r.canteen_capitalization} onChange={e => updateFund(r.id, 'canteen_capitalization', e.target.value)} />
                           : <span className="text-[#7C9A6E] font-semibold">{fmt(r.canteen_capitalization)}</span>}
